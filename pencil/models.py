@@ -14,7 +14,7 @@ class User(db.Model, UserMixin):
     id  = db.Column(db.Integer(), primary_key=True, nullable=False)
     username = db.Column(db.String(length=30), nullable=False, unique=True)
     email = db.Column(db.String(length=50), nullable=False, unique=True)
-    password_hash = db.Column(db.String(length=20), nullable=False)
+    password_hash = db.Column(db.String(length=100), nullable=False)
     posts = db.relationship("Post", backref="owned_user", lazy=True)
 
     @property
@@ -40,6 +40,7 @@ class Post(db.Model):
     title = db.Column(db.String(length=50), nullable=False)
     content = db.Column(db.Text, nullable=False)
     publication_date = db.Column(db.DateTime, default=datetime.utcnow())
+    modification_date = db.Column(db.DateTime, default=datetime.utcnow())
     owner = db.Column(db.Integer(), db.ForeignKey("user.id"))
         
     def __repr__(self):

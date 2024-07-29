@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField
 from wtforms.validators import Length, EqualTo, Email, DataRequired, ValidationError
 from pencil.models import User
 
@@ -28,6 +28,6 @@ class LoginForm(FlaskForm):
     submit = SubmitField(label="LogIn")
 
 class PostForm(FlaskForm):
-    title = StringField(label="Title:", validators=[DataRequired()])
-    content = StringField(label="Create a post", validators=[DataRequired()])
+    title = StringField(label="Title:", validators=[Length(max=100), DataRequired()])
+    content = TextAreaField(label="Create a post", validators=[DataRequired()])
     submit = SubmitField(label="Save")
