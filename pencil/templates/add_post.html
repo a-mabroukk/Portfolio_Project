@@ -23,6 +23,7 @@
         {% endwith %}
 
         <form method="POST" novalidate>
+            {{  post_form.hidden_tag() }}
             <div class="form-group">
                 <label for="title">Title</label>
                 <input type="text" class="form-control" id="title" name="title" required  

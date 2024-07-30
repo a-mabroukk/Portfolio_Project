@@ -8,47 +8,13 @@ from datetime import datetime
 
 
 @app.route("/")
-@app.route("/home", methods=["GET"])
+@app.route("/home", methods=["GET", "POST"])
 @login_required
 def home_page():
-    post = Post.query.order_by(Post.title.desc()).limit(10)
-    return render_template("home.html", post=post)
+    posts = Post.query.order_by(Post.title.desc()).limit(10)
+    return render_template("home.html", post=posts)
 
-@app.route("/blog", methods=["GET", "POST"])
-def blog_page():
-    if request.method == "GET":
-        # Display specific blog
-        posts_id = request.form.get("posts_id")
-        if posts_id:
-            requested_blog = Post.query.filter_by(id=posts_id).first()
-            if requested_blog is None:
-                abort(404)
-            return redirect(url_for("blog_page"))
-
-    return render_template("blog.html", posts_id=posts_id)
-
-@app.route("/modify", methods=["POST"])
-@login_required
-def modify_post():
-    if request.method == "POST":
-        # Update specific blog if it exists
-        posts_id = request.form.get("posts_id")
-        requested_blog = Post.query.filter_by(id=posts_id).first()
-        if requested_blog:
-            new_title = request.form.get("title")
-            new_content = request.form.get("content")
-            modification_date = datetime.now()
-            requested_blog.title = new_title
-            requested_blog.content = new_content
-            requested_blog.modification_date = modification_date
-            db.session.commit()
-            flash(f"The blog has been updated successfully.", category='success')
-            return redirect(url_for("blog_page", posts_id=posts_id))
-        else:
-            abort(404)
-    return render_template("blog.html", posts_id=posts_id)
-
-@app.route("/publish", methods=["POST"])
+@app.route("/publish", methods=["POST", "GET"])
 @login_required
 def posting_page():
     post_form = PostForm()
@@ -72,21 +38,59 @@ def posting_page():
 
     return render_template("add_post.html", post_form=post_form)
 
-@app.route("/delete", methods=["POST"])
+@app.route("/blog", methods=["GET", "POST"])
+def blog_page():
+    if request.method == "GET":
+    # Display specific blog
+        post_id = request.form.get("post_id")
+        if post_id:
+            requested_blog = Post.query.filter_by(id=post_id).first()
+            if requested_blog is None:
+                abort(404)
+            return redirect(url_for("blog_page"))
+    #profile_posts = Post.query.filter_by(owner=current_user.id).order_by(Post.publication_date.desc()).all()
+
+    #return render_template("blog.html", post_id=post_id, profile_posts = profile_posts)
+    #return render_template("blog.html", post_id=post_id)
+    # return render_template("blog.html", posts_id=posts_id)
+
+@app.route("/modify", methods=["POST", "GET"])
+@login_required
+def modify_post():
+    if request.method == "POST":
+        # Update specific blog if it exists
+        post_id = request.form.get("post_id")
+        requested_blog = Post.query.filter_by(id=post_id).first()
+        if requested_blog:
+            new_title = request.form.get("title")
+            new_content = request.form.get("content")
+            modification_date = datetime.now()
+            requested_blog.title = new_title
+            requested_blog.content = new_content
+            requested_blog.modification_date = modification_date
+            db.session.commit()
+            flash(f"The blog has been updated successfully.", category='success')
+            return redirect(url_for("blog_page", post_id=post_id))
+        else:
+            abort(404)
+    return redirect(url_for("home_page"))
+
+@app.route("/delete", methods=["POST", "GET"])
 @login_required
 def delete_page():
     if request.method == "POST":
     # Canceling blog
-        deleted_post = request.form.get("deleted_post")
-        if deleted_post:
-            del_post = Post.query.filter_by(title=deleted_post).first()
-            if del_post:
-                db.session.delete(del_post)
+        post_id = request.form.get("post_id")
+        if post_id:
+            post_to_delete = Post.query.filter_by(id=post_id).first()
+            if post_to_delete:
+                db.session.delete(post_to_delete)
                 db.session.commit()
                 flash(f"The blog has been removed successfully", category="success")
             else:
                 flash(f"The blog not found", category="danger")
-    return redirect(url_for("home_page", deleted_post=deleted_post))
+    return redirect(url_for("home_page"))
+                
 
 @app.route("/register", methods=["GET", "POST"])
 def register_page():
