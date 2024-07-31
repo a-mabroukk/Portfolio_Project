@@ -44,4 +44,4 @@ class Post(db.Model):
     owner = db.Column(db.Integer(), db.ForeignKey("user.id"))
         
     def __repr__(self):
-        return f"Post {self.name}"
+        return f"Post {self.id}"

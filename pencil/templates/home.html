@@ -13,9 +13,10 @@
                 <div class="card">
                     <img src="https://via.placeholder.com/150" class="card-img-top" alt="{{post.title}}">
                     <div class="card-body">
-                        <h5 class="card-title">"{{post.title}}"</h5>
-                        <p class="card-text">"{{post.content}}"</p>
-                        <a href="http://127.0.0.1:5000/blog" class="btn btn-primary">View</a>
+                        <a href="{{ url_for('blog_page', post_id=post.id) }}">{{ post.title }}</a>
+                    </div>
+                    <div class="card-body">
+                        <a href="{{ url_for('blog_page') }}" class="btn btn-primary">View</a>
                     </div>
                 </div>
             </div>

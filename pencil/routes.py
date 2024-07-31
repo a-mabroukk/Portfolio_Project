@@ -31,22 +31,22 @@ def posting_page():
             return redirect(url_for("blog_page", post_id=post_id))
         except Exception as e:
             db.session.rollback()  # Rollback in case of error
-            print(f"Database Error: {e}")
             flash("An error occurred while saving the post. Please try again.", category="danger")
     return render_template("add_post.html", post_form=post_form)
 
-@app.route("/blog", methods=["GET", "POST"])
+@app.route("/blog", methods=["GET"])
 def blog_page():
     if request.method == "GET":
     # Display specific blog
         post_id = request.args.get("post_id")
         if post_id:
             requested_blog = Post.query.filter_by(id=post_id).first()
-            if requested_blog is None:
+            if requested_blog:
+                return render_template("blog.html", post_id=requested_blog)
+            else:
                 abort(404)
-            return render_template("blog.html", post_id=requested_blog)
-            #return render_template("blog.html", post_id=requested_blog)
     return redirect(url_for("home_page"))
+    
 
 @app.route("/modify", methods=["POST", "GET"])
 @login_required
