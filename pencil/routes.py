@@ -19,38 +19,35 @@ def home_page():
 def posting_page():
     post_form = PostForm()
 
-    if request.method == "POST":
-        # Publishing a post
-        if post_form.validate_on_submit(): # Ensure the form is valid
-            try:
-                post_to_create = Post(title=post_form.title.data,
-                                      content=post_form.content.data,
-                                      owner=current_user.id)
-                db.session.add(post_to_create)
-                db.session.commit()
-                flash(f"The blog has been saved successfully", category="success")
-                return redirect(url_for("blog_page"))
-            except Exception as e:
-                db.session.rollback()  # Rollback in case of error  
-                flash("An error occurred while saving the post. Please try again.", category="danger")
-        else:
-            flash("There were errors in your form. Please correct them.", category="danger")
-
+    # Publishing a post
+    if post_form.validate_on_submit(): # Ensure the form is valid
+        try:
+            post_to_create = Post(title=post_form.title.data,
+                                  content=post_form.content.data,
+                                  owner=current_user.id)
+            db.session.add(post_to_create)
+            db.session.commit()
+            flash(f"The blog has been saved successfully", category="success")
+            return redirect(url_for("blog_page"))
+        except Exception as e:
+            db.session.rollback()  # Rollback in case of error
+            print(f"Error: {e}")
+            flash("An error occurred while saving the post. Please try again.", category="danger")
     return render_template("add_post.html", post_form=post_form)
 
 @app.route("/blog", methods=["GET", "POST"])
 def blog_page():
     if request.method == "GET":
     # Display specific blog
-        post_id = request.form.get("post_id")
+        post_id = request.args.get("post_id")
         if post_id:
             requested_blog = Post.query.filter_by(id=post_id).first()
             if requested_blog is None:
                 abort(404)
             return redirect(url_for("blog_page"))
-    #profile_posts = Post.query.filter_by(owner=current_user.id).order_by(Post.publication_date.desc()).all()
-
-    #return render_template("blog.html", post_id=post_id, profile_posts = profile_posts)
+        profile_posts = Post.query.filter_by(owner=current_user.id).order_by(Post.publication_date.desc()).all()
+    
+    return render_template("blog.html", post_id=post_id, profile_posts = profile_posts)
     #return render_template("blog.html", post_id=post_id)
     # return render_template("blog.html", posts_id=posts_id)
 

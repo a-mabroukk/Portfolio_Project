@@ -38,7 +38,7 @@ class User(db.Model, UserMixin):
 class Post(db.Model):
     id  = db.Column(db.Integer(), primary_key=True, nullable=False)
     title = db.Column(db.String(length=50), nullable=False)
-    content = db.Column(db.Text, nullable=False)
+    content = db.Column(db.Text(), nullable=False)
     publication_date = db.Column(db.DateTime, default=datetime.utcnow())
     modification_date = db.Column(db.DateTime, default=datetime.utcnow())
     owner = db.Column(db.Integer(), db.ForeignKey("user.id"))
