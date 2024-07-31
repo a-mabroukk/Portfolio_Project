@@ -6,26 +6,14 @@
 {% block content %}
 <body>
     <div class="container mt-5">
-        <h1>{{ posts_id.title }}</h1>
-        <p class="text-muted">Published on: {{ posts_id.publication_date }}</p>
+        <h1>{{ post_id.title }}</h1>
+        <p class="text-muted">Published on: {{ post_id.publication_date }}</p>
         <div class="mt-3">
-            <p>{{ posts_id.content }}</p>
+            <p>{{ post_id.content }}</p>
         </div>
-        {% for post in profile_posts %}
-        <div class="col-md-4">
-            <div class="card">
-                <img src="https://via.placeholder.com/150" class="card-img-top" alt="{{post.title}}">
-                <div class="card-body">
-                    <h5 class="card-title text-dark">"{{post.title}}"</h5>
-                    <p class="card-text text-dark">"{{post.content}}"</p>
-                    <a href="{{ url_for('modify_post', posts_id=post.id) }}" class="btn btn-warning">Edit</a>
-                    <a href="{{ url_for('delete_page', deleted_post=post.id) }}" class="btn btn-warning">Delete</a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+        
         <!-- Edit Button -->
-        <a href="{{ url_for('modify_post', posts_id=posts_id) }}" class="btn btn-warning">Edit</a>
+       <a href="{{ url_for('modify_post', posts_id=posts_id) }}" class="btn btn-warning">Edit</a>
         <a href="{{ url_for('blog_page') }}" class="btn btn-secondary">Back</a>
 
         <!-- Delete Button -->

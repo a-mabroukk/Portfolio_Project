@@ -12,13 +12,12 @@ from datetime import datetime
 @login_required
 def home_page():
     posts = Post.query.order_by(Post.title.desc()).limit(10)
-    return render_template("home.html", post=posts)
+    return render_template("home.html", posts=posts)
 
 @app.route("/publish", methods=["POST", "GET"])
 @login_required
 def posting_page():
     post_form = PostForm()
-
     # Publishing a post
     if post_form.validate_on_submit(): # Ensure the form is valid
         try:
@@ -27,11 +26,12 @@ def posting_page():
                                   owner=current_user.id)
             db.session.add(post_to_create)
             db.session.commit()
+            post_id = post_to_create.id
             flash(f"The blog has been saved successfully", category="success")
-            return redirect(url_for("blog_page"))
+            return redirect(url_for("blog_page", post_id=post_id))
         except Exception as e:
             db.session.rollback()  # Rollback in case of error
-            print(f"Error: {e}")
+            print(f"Database Error: {e}")
             flash("An error occurred while saving the post. Please try again.", category="danger")
     return render_template("add_post.html", post_form=post_form)
 
@@ -44,12 +44,9 @@ def blog_page():
             requested_blog = Post.query.filter_by(id=post_id).first()
             if requested_blog is None:
                 abort(404)
-            return redirect(url_for("blog_page"))
-        profile_posts = Post.query.filter_by(owner=current_user.id).order_by(Post.publication_date.desc()).all()
-    
-    return render_template("blog.html", post_id=post_id, profile_posts = profile_posts)
-    #return render_template("blog.html", post_id=post_id)
-    # return render_template("blog.html", posts_id=posts_id)
+            return render_template("blog.html", post_id=requested_blog)
+            #return render_template("blog.html", post_id=requested_blog)
+    return redirect(url_for("home_page"))
 
 @app.route("/modify", methods=["POST", "GET"])
 @login_required
