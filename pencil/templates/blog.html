@@ -13,13 +13,22 @@
         </div>
         
         <!-- Edit Button -->
-       <a href="{{ url_for('modify_post', posts_id=posts_id) }}" class="btn btn-warning">Edit</a>
+        <!--<form action="{{ url_for('modify_post', post_id=post_id.id) }}" method="POST" class="mt-3">
+            
+            <a href="{{ url_for('home_page') }}" class="btn btn-secondary">Back</a>
+        </form> -->
+        <a href="{{ url_for('modify_post', post_id=post_id.id) }}" class="btn btn-primary mt-3">Edit</a>
         <a href="{{ url_for('home_page') }}" class="btn btn-secondary">Back</a>
 
         <!-- Delete Button -->
-        <div class="container mt-5">
-            <a href="{{ url_for('delete_page', deleted_post=deleted_post) }}" class="btn btn-warning">Delete</a>
-        </div>
+        <form action="{{ url_for('delete_page', post_id=post_id.id) }}" method="POST" class="mt-3">
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+
+        <!-- <form action="{{ url_for('delete_page', id=post_id.id) }}" method="POST" class="mt-3">
+            <button type="submit" class="btn btn-danger">Delete</button>
+    </form> -->
+
     </div>
 </body>
 {% endblock %}

@@ -34,7 +34,7 @@ def posting_page():
             flash("An error occurred while saving the post. Please try again.", category="danger")
     return render_template("add_post.html", post_form=post_form)
 
-@app.route("/blog", methods=["GET"])
+@app.route("/blog", methods=["GET", "POST"])
 def blog_page():
     if request.method == "GET":
     # Display specific blog
@@ -46,45 +46,80 @@ def blog_page():
             else:
                 abort(404)
     return redirect(url_for("home_page"))
-    
 
 @app.route("/modify", methods=["POST", "GET"])
 @login_required
 def modify_post():
-    if request.method == "POST":
+    post_id = request.args.get("post_id")
+    if post_id:
+        post = Post.query.filter_by(id=post_id).first()
+        if not post:
+            flash(f"The blog not found", category="danger")
+            return redirect(url_for("home_page"))
+        if current_user.id != post.owner:
+            flash("You do not have permission to modify this blog.", category="danger")
+            return redirect(url_for("blog_page"))
+        # Initialize form with existing post data
+        form = PostForm(obj=post)
+        return render_template("modify.html", form=form, post=post)
+
+    form = PostForm(request.form)  # Populate form with existing post data
+    if form.validate_on_submit(): # Ensure the form is valid
         # Update specific blog if it exists
-        post_id = request.form.get("post_id")
-        requested_blog = Post.query.filter_by(id=post_id).first()
-        if requested_blog:
-            new_title = request.form.get("title")
-            new_content = request.form.get("content")
-            modification_date = datetime.now()
-            requested_blog.title = new_title
-            requested_blog.content = new_content
-            requested_blog.modification_date = modification_date
-            db.session.commit()
-            flash(f"The blog has been updated successfully.", category='success')
+        post = Post.query.get(form.id.data)  # Use form ID data to get the post
+        if post is None:
+            flash("Post not found.", category="danger")
+            return redirect(url_for('blog_page'))
+        
+        if current_user.id != post.owner:
+            flash("You do not have permission to modify this blog.", category="danger")
             return redirect(url_for("blog_page", post_id=post_id))
-        else:
-            abort(404)
-    return redirect(url_for("home_page"))
+        post.title = form.title.data
+        post.content = form.content.data
+        modification_date = datetime.now()
+        post.modification_date = modification_date
+        db.session.commit()
+        flash(f"The blog has been updated successfully.", category='success')
+        return redirect(url_for("blog_page", post_id=post.id))
+    else:
+        abort(404)
+    return render_template("modify.html", form=form, post=post)
+ 
 
 @app.route("/delete", methods=["POST", "GET"])
-@login_required
+@login_required  
 def delete_page():
-    if request.method == "POST":
     # Canceling blog
-        post_id = request.form.get("post_id")
-        if post_id:
-            post_to_delete = Post.query.filter_by(id=post_id).first()
-            if post_to_delete:
-                db.session.delete(post_to_delete)
-                db.session.commit()
-                flash(f"The blog has been removed successfully", category="success")
-            else:
-                flash(f"The blog not found", category="danger")
+    post_id = request.args.get("post_id")
+    if post_id:
+        post_to_delete = Post.query.filter_by(id=post_id).first()
+        if not post_to_delete:
+            flash(f"The blog not found", category="danger")
+        elif current_user.id != post_to_delete.owner:
+            flash(f"You do not heve permission to delete this blog", category="danger")
+            return redirect(url_for("home_page"))
+        else:
+            db.session.delete(post_to_delete)
+            db.session.commit()
+            flash(f"The blog has been removed successfully", category="success")
     return redirect(url_for("home_page"))
-                
+
+# @app.route("/delete/<id>", methods=["POST"])
+# @login_required  
+# def delete_page(id):
+    # Canceling blog
+    # post = Post.query.filter_by(id=id).first()
+    # if not post:
+        # flash(f"The blog not found", category="danger")
+    # elif current_user.id != post.owner:
+        # flash(f"You do not heve permission to delete this blog", category="danger")
+        # return redirect(url_for("home_page"))
+    # else:
+        # db.session.delete(post)
+        # db.session.commit()
+        # flash(f"The blog has been removed successfully", category="success")
+    # return redirect(url_for("home_page"))
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register_page():

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, HiddenField
 from wtforms.validators import Length, EqualTo, Email, DataRequired, ValidationError
 from pencil.models import User
 
@@ -28,6 +28,8 @@ class LoginForm(FlaskForm):
     submit = SubmitField(label="LogIn")
 
 class PostForm(FlaskForm):
+    id = HiddenField() # Hidden field to store post ID and keep track of the post ID when updating
     title = StringField(label="Title:", validators=[Length(max=100), DataRequired()])
     content = TextAreaField(label="Create a post", validators=[DataRequired()])
+    modification_date = StringField(label="Modified on:", validators=[DataRequired()])
     submit = SubmitField(label="Save")
