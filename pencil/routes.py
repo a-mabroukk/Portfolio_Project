@@ -26,12 +26,16 @@ def posting_page():
                                   owner=current_user.id)
             db.session.add(post_to_create)
             db.session.commit()
+            db.session.save(post_to_create)
             post_id = post_to_create.id
             flash(f"The blog has been saved successfully", category="success")
             return redirect(url_for("blog_page", post_id=post_id))
         except Exception as e:
             db.session.rollback()  # Rollback in case of error
             flash("An error occurred while saving the post. Please try again.", category="danger")
+    if post_form.errors != {}:
+        for error_message in post_form.errors.values():
+            flash(f"There is an error with adding: {error_message}", category="danger")
     return render_template("add_post.html", post_form=post_form)
 
 @app.route("/blog", methods=["GET", "POST"])
@@ -59,32 +63,24 @@ def modify_post():
         if current_user.id != post.owner:
             flash("You do not have permission to modify this blog.", category="danger")
             return redirect(url_for("blog_page"))
-        # Initialize form with existing post data
-        form = PostForm(obj=post)
-        return render_template("modify.html", form=form, post=post)
 
-    form = PostForm(request.form)  # Populate form with existing post data
-    if form.validate_on_submit(): # Ensure the form is valid
+    # Initialize form with existing post data
+    form = PostForm(obj=post)
+
+    if request.method == "POST":
+        if form.validate_on_submit(): # Ensure the form is valid
         # Update specific blog if it exists
-        post = Post.query.get(form.id.data)  # Use form ID data to get the post
-        if post is None:
-            flash("Post not found.", category="danger")
-            return redirect(url_for('blog_page'))
-        
-        if current_user.id != post.owner:
-            flash("You do not have permission to modify this blog.", category="danger")
-            return redirect(url_for("blog_page", post_id=post_id))
-        post.title = form.title.data
-        post.content = form.content.data
-        modification_date = datetime.now()
-        post.modification_date = modification_date
-        db.session.commit()
-        flash(f"The blog has been updated successfully.", category='success')
-        return redirect(url_for("blog_page", post_id=post.id))
-    else:
-        abort(404)
+            post.title = form.title.data
+            post.content = form.content.data
+            modification_date = datetime.now()
+            post.modification_date = modification_date
+            db.session.commit()
+            flash(f"The blog has been updated successfully.", category='success')
+            return redirect(url_for("blog_page", post_id=post.id))
+        else:
+            # Render the form again with errors
+            return render_template("modify.html", form=form, post=post)
     return render_template("modify.html", form=form, post=post)
- 
 
 @app.route("/delete", methods=["POST", "GET"])
 @login_required  
