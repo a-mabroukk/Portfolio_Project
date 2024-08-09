@@ -21,13 +21,14 @@ def posting_page():
     # Publishing a post
     if post_form.validate_on_submit(): # Ensure the form is valid
         try:
+            print("Form data:", post_form.title.data, post_form.content.data)
             post_to_create = Post(title=post_form.title.data,
                                   content=post_form.content.data,
                                   owner=current_user.id)
             db.session.add(post_to_create)
             db.session.commit()
-            db.session.save(post_to_create)
             post_id = post_to_create.id
+            print("blog:", post_to_create.id)
             flash(f"The blog has been saved successfully", category="success")
             return redirect(url_for("blog_page", post_id=post_id))
         except Exception as e:

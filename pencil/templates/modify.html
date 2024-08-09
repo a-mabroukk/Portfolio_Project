@@ -24,7 +24,7 @@
         
         <!-- Modify Post Form -->
         <form method="POST" action="{{ url_for('modify_post', post_id=post.id) }}">
-            {{ post_form.hidden_tag() }}
+            {{ form.hidden_tag() }}
     
             <!-- Title Field -->
             <div class="form-group">
