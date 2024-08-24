@@ -24,6 +24,14 @@
                 <a class="nav-link" href="{{ url_for('home_page') }}">Home <span class="sr-only">(current)</span></a>
             </li>
         </ul>
+        <!-- Search Block -->
+        <form method="POST" action="{{ url_for('home_page') }}">
+            {% if search_form %}
+                {{ search_form.hidden_tag() }}
+                <input type="text" name="input_search" placeholder="Search..." value="{{ search_form.input_search.data }}">
+                <input type="submit" value="Search">
+            {% endif %}
+        </form>
           {% if current_user.is_authenticated %}
             <ul class="navbar-nav">
                 <li class="nav-item">

@@ -1,7 +1,7 @@
 from pencil import app
 from flask import render_template, redirect, url_for, flash, request, abort
-from pencil.models import Post, User
-from pencil.forms import RegisterForm, LoginForm, PostForm
+from pencil.models import Post, User, Comment 
+from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm
 from pencil import db
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
@@ -11,8 +11,22 @@ from datetime import datetime
 @app.route("/home", methods=["GET", "POST"])
 @login_required
 def home_page():
-    posts = Post.query.order_by(Post.title.desc()).limit(10)
-    return render_template("home.html", posts=posts)
+    search_form = SearchForm()
+    search_results = []
+
+    if search_form.validate_on_submit(): 
+        search_results = Post.query.filter(Post.title.ilike(f"%{search_form.input_search.data}%")).all()
+        # If no results found, search by ID  
+        if not search_results:
+            search_results = Post.query.filter(Post.id.ilike(f"%{search_form.input_search.data}%")).all()
+        # Flash a message if no results found after both searches  
+        if not search_results:
+            flash("No results found", category="info")
+            return redirect(url_for("home_page", search_results=[]))  # Redirect with empty results
+    # Fetch the latest posts  
+    posts = Post.query.order_by(Post.title.desc()).limit(20).all()
+    return render_template("home.html", posts=posts, search_form=search_form, search_results=search_results)
+
 
 @app.route("/publish", methods=["POST", "GET"])
 @login_required
@@ -39,15 +53,30 @@ def posting_page():
             flash(f"There is an error with adding: {error_message}", category="danger")
     return render_template("add_post.html", post_form=post_form)
 
-@app.route("/blog", methods=["GET", "POST"])
+@app.route("/blog", methods=["POST", "GET"])
+@login_required
 def blog_page():
+    comment_form = CommentForm()
+    comment_id = None
+
+    if comment_form.validate_on_submit():
+        comment_to_post = Comment(text=comment_form.comment.data,
+                                  commentator=current_user.id,
+                                  post=requested_blog.id)
+        db.session.add(comment_to_post)
+        db.session.commit()
+        comment_id = comment_to_post
+        flash(f"Thanks for your comment", category="success")
+        return redirect(url_for("blog_page", comment_id=comment_id))
+
     if request.method == "GET":
     # Display specific blog
         post_id = request.args.get("post_id")
         if post_id:
             requested_blog = Post.query.filter_by(id=post_id).first()
+            posted_comments = Comment.query.order_by(Comment.publication_date.desc()).all()
             if requested_blog:
-                return render_template("blog.html", post_id=requested_blog)
+                return render_template("blog.html", post_id=requested_blog, comment_form=comment_form, comment_id=comment_id, posted_comments=posted_comments)
             else:
                 abort(404)
     return redirect(url_for("home_page"))

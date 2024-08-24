@@ -30,5 +30,11 @@ class LoginForm(FlaskForm):
 class PostForm(FlaskForm):
     title = StringField(label="Title:", validators=[Length(max=100), DataRequired()])
     content = TextAreaField(label="Create a post", validators=[DataRequired()])
-    modification_date = StringField(label="Modified on:", validators=[DataRequired()])
     submit = SubmitField(label="Save")
+
+class SearchForm(FlaskForm):
+    input_search = StringField(label="Search", validators=[Length(max=100), DataRequired()])
+
+class CommentForm(FlaskForm):
+    comment = TextAreaField(label="Write your comment....", validators=[DataRequired()])
+    submit = SubmitField(label="Post")

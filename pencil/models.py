@@ -16,6 +16,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(length=50), nullable=False, unique=True)
     password_hash = db.Column(db.String(length=100), nullable=False)
     posts = db.relationship("Post", backref="owned_user", lazy=True)
+    comments = db.relationship("Comment", backref="owned_commentator", lazy=True)
 
     @property
     def password(self):
@@ -42,6 +43,18 @@ class Post(db.Model):
     publication_date = db.Column(db.DateTime, default=datetime.utcnow())
     modification_date = db.Column(db.DateTime, default=datetime.utcnow())
     owner = db.Column(db.Integer(), db.ForeignKey("user.id"))
+    commentators = db.relationship("Comment", backref="owned_commentators", lazy=True)
         
     def __repr__(self):
         return f"Post {self.id}"
+
+class Comment(db.Model):
+    id = db.Column(db.Integer(), primary_key=True, nullable=False)
+    text = db.Column(db.Text(), nullable=False)
+    publication_date = db.Column(db.DateTime, default=datetime.utcnow())
+    modification_date = db.Column(db.DateTime, default=datetime.utcnow())
+    commentator = db.Column(db.Integer(), db.ForeignKey("user.id"))
+    commentatorr = db.Column(db.Integer(), db.ForeignKey("post.id"))
+
+    def __repr__(self):
+        return f"Comment {self.id}"
