@@ -38,3 +38,7 @@ class SearchForm(FlaskForm):
 class CommentForm(FlaskForm):
     comment = TextAreaField(label="Write your comment....", validators=[DataRequired()])
     submit = SubmitField(label="Post")
+
+class ReplyForm(FlaskForm):
+    reply = TextAreaField(label="repy comment", validators=[DataRequired()])
+    submit = SubmitField(label="Send")

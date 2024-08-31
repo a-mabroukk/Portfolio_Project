@@ -1,7 +1,7 @@
 from pencil import app
 from flask import render_template, redirect, url_for, flash, request, abort
-from pencil.models import Post, User, Comment 
-from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm
+from pencil.models import Post, User, Comment, ReplyComment
+from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm
 from pencil import db
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
@@ -57,29 +57,78 @@ def posting_page():
 @login_required
 def blog_page():
     comment_form = CommentForm()
-    comment_id = None
+    reply_form = ReplyForm()
 
-    if comment_form.validate_on_submit():
-        comment_to_post = Comment(text=comment_form.comment.data,
-                                  commentator=current_user.id,
-                                  post=requested_blog.id)
-        db.session.add(comment_to_post)
-        db.session.commit()
-        comment_id = comment_to_post
-        flash(f"Thanks for your comment", category="success")
-        return redirect(url_for("blog_page", comment_id=comment_id))
-
-    if request.method == "GET":
-    # Display specific blog
-        post_id = request.args.get("post_id")
-        if post_id:
-            requested_blog = Post.query.filter_by(id=post_id).first()
-            posted_comments = Comment.query.order_by(Comment.publication_date.desc()).all()
-            if requested_blog:
-                return render_template("blog.html", post_id=requested_blog, comment_form=comment_form, comment_id=comment_id, posted_comments=posted_comments)
+    post_id = request.args.get("post_id")
+    if post_id:
+        requested_blog = Post.query.filter_by(id=post_id).first()
+        if requested_blog:
+            if request.method == "POST":
+                if comment_form.validate_on_submit():
+                    comment_to_post = Comment(text=comment_form.comment.data,
+                                              commentator=current_user.id,
+                                              commentatorr=requested_blog.id)
+                    db.session.add(comment_to_post)
+                    db.session.commit()
+                    comment_id = comment_to_post.id
+                    flash(f"Thanks for your comment", category="success")
+                    return redirect(url_for("blog_page", comment_id=comment_id))
+                if  reply_form.validate_on_submit():
+                    comment_id = request.form.get("comment_id")
+                    if comment_id:
+                        reply_to_post = ReplyComment(text=reply_form.reply.data, responder=current_user.id,
+                                                     reply_comment=comment_id)
+                        db.session.add(reply_to_post)
+                        db.session.commit()
+                        reply_id = reply_to_post.id
+                        flash(f"Thanks for your comment", category="success")
+                        return redirect(url_for("blog_page", reply_id=reply_id))
+            if request.method == "GET":
+                # Display a specific blog with its comments and the replies associated with those comments
+                comment_with_replies = (db.session.query(Comment, ReplyComment).outerjoin(ReplyComment, Comment.id == ReplyComment.reply_comment)
+                                        .filter(Comment.commentatorr == post_id).order_by(Comment.publication_date.desc(), ReplyComment.publication_date.desc())).all()
+                posted_comments = {}
+                for comment, reply in comment_with_replies:
+                    if comment.id not in posted_comments:
+                        posted_comments[comment.id] = {
+                        'comment': comment,
+                        'replies': []
+                    }
+                    if reply:
+                        posted_comments[comment.id]['replies'].append(reply)
+                return render_template("blog.html", post_id=requested_blog, comment_form=comment_form, posted_comments=posted_comments.values(),
+                                        reply_form=reply_form)
             else:
-                abort(404)
+                flash(f"Blog not found", category="danger")
+                return redirect(url_for("home_page"))
     return redirect(url_for("home_page"))
+
+@app.route("/modify-comment", methods=["POST", "GET"])
+@login_required
+def modify_comment():
+    # Fetch the comment ID from request arguments
+    comment_to_modify = request.args.get("comment_to_modify")
+    if comment_to_modify:
+        # Query for the comment
+        commnts = Comment.query.filter_by(id=comment_to_modify).first()
+        # Check if the comment was found
+        if not comments:
+            flash("Comment not found.", category="danger")
+            return redirect(url_for("blog_page"))
+
+        # Initialize form with existing comment data if comment is found
+    form = CommentForm(obj=commnts)
+
+    if request.method == "POST" and commnts:
+        if form.validate_on_submit():  # Ensure the form is valid
+            # Update comment data
+            commnts.text = form.comment.data
+            commnts.modification_date = datetime.now()
+            db.session.commit()
+            flash("The comment has been updated successfully.", category='success')
+            return redirect(url_for("blog_page", post_id=commnts.commentatorr))
+    # Render the template whether or not the comment was found
+    return render_template("modify_comments.html", form=form, commnts=commnts)
 
 @app.route("/modify", methods=["POST", "GET"])
 @login_required
@@ -129,6 +178,21 @@ def delete_page():
             db.session.commit()
             flash(f"The blog has been removed successfully", category="success")
     return redirect(url_for("home_page"))
+
+@app.route("/delete-comment", methods=["POST", "GET"])
+@login_required  
+def delete_comment():
+    comment_id = request.args.get("comment_id")
+    if comment_id:
+        comment_to_delete = Comment.query.filter_by(id=comment_id).first()
+        if not comment_to_delete:
+            flash("The comment is no longer available.", category="danger")
+            return redirect(url_for("home_page"))
+
+        db.session.delete(comment_to_delete)
+        db.session.commit()
+        flash(f"The comment has been removed successfully", category="success")
+    return redirect(url_for("blog_page", post_id=comment_to_delete.commentatorr))
 
 # @app.route("/delete/<id>", methods=["POST"])
 # @login_required  
