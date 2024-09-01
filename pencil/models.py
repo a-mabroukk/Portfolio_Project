@@ -10,6 +10,9 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+saved_blogs = db.Table("saved_blogs", db.Column("user_id", db.Integer, db.ForeignKey("user.id")),
+                       db.Column("post_id", db.Integer, db.ForeignKey("post.id")))
+
 class User(db.Model, UserMixin):
     id  = db.Column(db.Integer(), primary_key=True, nullable=False)
     username = db.Column(db.String(length=30), nullable=False, unique=True)
@@ -18,6 +21,7 @@ class User(db.Model, UserMixin):
     posts = db.relationship("Post", backref="owned_user", lazy=True)
     comments = db.relationship("Comment", backref="owned_commentator", lazy=True)
     replies = db.relationship("ReplyComment", backref="owned_responder", lazy=True)
+    archives = db.relationship("Post", secondary="saved_blogs", backref="user")
 
     @property
     def password(self):

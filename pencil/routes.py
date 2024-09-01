@@ -64,6 +64,17 @@ def blog_page():
         requested_blog = Post.query.filter_by(id=post_id).first()
         if requested_blog:
             if request.method == "POST":
+                print("POST request received")
+                if 'save' in request.form:
+                    print("Save button clicked")
+                    if requested_blog in current_user.archives:
+                        flash("Blog is already saved.", category="info")
+                    else:
+                        current_user.archives.append(requested_blog)
+                        db.session.commit()
+                        flash(f"The blog is has been saved successfully", category="success")
+                        return redirect(url_for("save_page"))
+
                 if comment_form.validate_on_submit():
                     comment_to_post = Comment(text=comment_form.comment.data,
                                               commentator=current_user.id,
@@ -108,27 +119,23 @@ def blog_page():
 def modify_comment():
     # Fetch the comment ID from request arguments
     comment_to_modify = request.args.get("comment_to_modify")
-    if comment_to_modify:
+    if comment_to_modify is not None:
         # Query for the comment
-        commnts = Comment.query.filter_by(id=comment_to_modify).first()
-        # Check if the comment was found
-        if not comments:
-            flash("Comment not found.", category="danger")
-            return redirect(url_for("blog_page"))
-
-        # Initialize form with existing comment data if comment is found
-    form = CommentForm(obj=commnts)
-
-    if request.method == "POST" and commnts:
+        comments = Comment.query.filter_by(id=comment_to_modify).first()
+    # Initialize form with existing comment data if comment is found
+    form = CommentForm(obj=comments)
+    if request.method == "POST":
         if form.validate_on_submit():  # Ensure the form is valid
             # Update comment data
-            commnts.text = form.comment.data
-            commnts.modification_date = datetime.now()
+            comments.text = form.comment.data
+            comments.modification_date = datetime.now()
             db.session.commit()
             flash("The comment has been updated successfully.", category='success')
-            return redirect(url_for("blog_page", post_id=commnts.commentatorr))
+            return redirect(url_for("blog_page", post_id=comments.commentatorr))
+        else:
+            return render_template("modify_comments.html", form=form, comments=comments)
     # Render the template whether or not the comment was found
-    return render_template("modify_comments.html", form=form, commnts=commnts)
+    return render_template("modify_comments.html", form=form, comments=comments)
 
 @app.route("/modify", methods=["POST", "GET"])
 @login_required
@@ -210,6 +217,11 @@ def delete_comment():
         # flash(f"The blog has been removed successfully", category="success")
     # return redirect(url_for("home_page"))
 
+@app.route("/saved", methods=["GET", "POST"])
+@login_required
+def save_page():
+    items = current_user.archives
+    return render_template("saved_items.html", items=items)
 
 @app.route("/register", methods=["GET", "POST"])
 def register_page():

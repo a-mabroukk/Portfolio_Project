@@ -6,7 +6,7 @@
 {% block content %}
 <body>
     <div>
-        <form method="POST" action="{{ url_for('modify_comment', comment_to_modify=commnts.id) }}">
+        <form method="POST" action="{{ url_for('modify_comment', comment_to_modify=comments.id) }}">
             {{ form.hidden_tag() }}
             <!-- Title Field -->
             <div class="form-group">
@@ -19,7 +19,7 @@
     
             <!-- Submit Button -->
             <button type="submit" class="btn btn-primary">Save Changes</button>
-            <a href="{{ url_for('blog_page', post_id=commnts.commentatorr) }}" class="btn btn-secondary">Cancel</a>
+            <a href="{{ url_for('blog_page', post_id=comments.commentatorr) }}" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
 </body>
