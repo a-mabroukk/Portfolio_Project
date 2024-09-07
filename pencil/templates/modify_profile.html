@@ -6,7 +6,7 @@
 {% block content %}
 <body>
     <div>
-        <form method="POST" action="{{ url_for('edit_profile', profiles=profile_to_update.profile.id) }}">
+        <form method="POST" action="{{ url_for('edit_profile', profiles=profile_to_update.id) }}">
             {{ form.hidden_tag() }}
             <!-- Title Field -->
             <div class="form-group">
@@ -18,7 +18,7 @@
             </div>
             <div class="form-group">
                 {{ form.username.label(class="form-label") }}
-                {{ form.usename(class="form-control") }}
+                {{ form.username(class="form-control") }}
                 {% for error in form.username.errors %}
                     <div class="text-danger">{{ error }}</div>
                 {% endfor %}
@@ -83,7 +83,7 @@
     
             <!-- Submit Button -->
             <button type="submit" class="btn btn-primary">Save Changes</button>
-            <a href="{{ url_for('profile', profile_id=profile_to_update.profile.users_profile) }}" class="btn btn-secondary">Cancel</a>
+            <a href="{{ url_for('profile', profile_id=profile_to_update.profiles) }}" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
 </body>

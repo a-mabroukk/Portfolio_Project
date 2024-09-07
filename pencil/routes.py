@@ -223,9 +223,9 @@ def profile():
 @app.route("/update-profile", methods=["POST", "GET"])
 @login_required
 def edit_profile():
-    profiles = request.args.get("profiles")
+    profiles = current_user.id
     if profiles:
-        profile_to_update = Profile.query.filter_by(id=profiles)
+        profile_to_update = Profile.query.filter_by(users_profile=profiles)
         if not profile_to_update:
             flash(f"No profile account found with this name", category="info")
             return redirect(url_for("home_page"))
@@ -233,18 +233,19 @@ def edit_profile():
     form = ProfileForm(obj=profile_to_update)
     if request.method == "POST":
         if form.validate_on_submit(): # Ensure the form is valid
-            profile_to_update.profile.name = form.name.data
-            profile_to_update.profile.username = form.username.data
-            profile_to_update.profile.bio = form.bio.data
-            profile_to_update.profile.gmail_links = form.gmail.data
-            profile_to_update.profile.facebook_links = form.facebook.data
-            profile_to_update.profile.instagram_links = form.instagram.data
-            profile_to_update.profile.x_links = form.x.data
-            profile_to_update.profile.linkedin_links = form.linkedin.data
-            profile_to_update.profile.github_links = form.github.data
+            profile_to_update.profile_picture = form.picture.data
+            profile_to_update.name = form.name.data
+            profile_to_update.username = form.username.data
+            profile_to_update.bio = form.bio.data
+            profile_to_update.gmail_links = form.gmail.data
+            profile_to_update.facebook_links = form.facebook.data
+            profile_to_update.instagram_links = form.instagram.data
+            profile_to_update.x_links = form.x.data
+            profile_to_update.linkedin_links = form.linkedin.data
+            profile_to_update.github_links = form.github.data
             db.session.commit()
             flash(f"Your profile updated successfully", category="success")
-            return redirect(url_for("profile", profile_id=profile_to_update.profile.users_profile))
+            return redirect(url_for("profile", profile_id=current_user.id))
         else:
             return render_template("modify_profile.html", form=form, profile_to_update=profile_to_update)
     return render_template("modify_profile.html", form=form, profile_to_update=profile_to_update)

@@ -44,10 +44,10 @@ class ReplyForm(FlaskForm):
     submit = SubmitField(label="Send")
 
 class ProfileForm(FlaskForm):
+    picture = FileField(label="Profile Picture", validators=[DataRequired()])
     name = StringField(label="Name", validators=[Length(min=2, max=30), DataRequired()])
     username = StringField(label="Userame", validators=[Length(min=2, max=30), DataRequired()])
     bio =  StringField(label="Bio", validators=[Length(min=2, max=30), DataRequired()])
-    picture = FileField(label="Profile Picture", validators=[DataRequired()])
     gmail = StringField(label="Gmail", validators=[DataRequired()])
     facebook = StringField(label="Facebook", validators=[DataRequired()])
     instagram = StringField(label="Instagram", validators=[DataRequired()])

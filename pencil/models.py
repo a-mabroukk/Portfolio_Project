@@ -43,10 +43,10 @@ class User(db.Model, UserMixin):
 
 class Profile(db.Model):
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
+    profile_picture = db.Column(db.String(), nullable=True)
     name = db.Column(db.String(length=50), nullable=False)
     username = db.Column(db.String(length=50), nullable=False)
     bio =  db.Column(db.Text(), nullable=False)
-    profile_picture = db.Column(db.String(), nullable=True)
     gmail_links = db.Column(db.String(), nullable=False)
     facebook_links = db.Column(db.String(), nullable=True)
     instagram_links =  db.Column(db.String(), nullable=True)

@@ -14,15 +14,15 @@
                 </form>
             </div>
             <div>
-                <p class="text-muted">Author: {{ profile_id.profile.username }}</p>
+                <p class="text-muted">Author: {{ profile_id.name }}</p>
             </div>
             <div>
-                <p class="text-muted">Bio: {{ profile_id.profile.bio }}</p>
+                <p class="text-muted">Bio: {{ profile_id.bio }}</p>
             </div>
             <br>
             <div>
                 <!-- Edit Button -->
-            <a href="{{ url_for('edit_profile', profiles=profile_id.profile.id) }}" class="btn btn-primary mt-3">Edit</a>
+            <a href="{{ url_for('edit_profile', profiles=profile_id.id) }}" class="btn btn-primary mt-3">Edit</a>
             <a href="{{ url_for('home_page') }}" class="btn btn-secondary">Back</a>
             </div>
         </section>
@@ -58,6 +58,9 @@
                 </header>
                 <ul>
                     <li>
+                        <a href="https://mail.google.com/mail/u/0/#inbox">Gmail</a>
+                    </li>
+                    <li>
                         <a href="https://www.facebook.com/HolbertonSchool/">Facebook</a>
                     </li>
                     
@@ -66,6 +69,9 @@
                     </li>
                     <li>
                         <a href="https://www.instagram.com/holbertonschool/">Instagram</a>
+                    </li>
+                    <li>
+                        <a href="https://www.github.com/a-mabroukk/alx-higher_level_programming/">GitHub</a>
                     </li>
                 </ul>
             </div>
