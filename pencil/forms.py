@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FileField
 from wtforms.validators import Length, EqualTo, Email, DataRequired, ValidationError
-from pencil.models import User
+from pencil.models import User, Post, Comment, ReplyComment, Profile
 
 
 class RegisterForm(FlaskForm):
@@ -40,5 +40,18 @@ class CommentForm(FlaskForm):
     submit = SubmitField(label="Post")
 
 class ReplyForm(FlaskForm):
-    reply = TextAreaField(label="repy comment", validators=[DataRequired()])
+    reply = TextAreaField(label="reply comment", validators=[DataRequired()])
     submit = SubmitField(label="Send")
+
+class ProfileForm(FlaskForm):
+    name = StringField(label="Name", validators=[Length(min=2, max=30), DataRequired()])
+    username = StringField(label="Userame", validators=[Length(min=2, max=30), DataRequired()])
+    bio =  StringField(label="Bio", validators=[Length(min=2, max=30), DataRequired()])
+    picture = FileField(label="Profile Picture", validators=[DataRequired()])
+    gmail = StringField(label="Gmail", validators=[DataRequired()])
+    facebook = StringField(label="Facebook", validators=[DataRequired()])
+    instagram = StringField(label="Instagram", validators=[DataRequired()])
+    x = StringField(label="X", validators=[DataRequired()])
+    linkedin = StringField(label="LinkedIn", validators=[DataRequired()])
+    github = StringField(label="GitHub", validators=[DataRequired()])
+    submit = SubmitField(label="Save")

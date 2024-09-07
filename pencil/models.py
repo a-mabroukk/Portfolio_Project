@@ -22,6 +22,7 @@ class User(db.Model, UserMixin):
     comments = db.relationship("Comment", backref="owned_commentator", lazy=True)
     replies = db.relationship("ReplyComment", backref="owned_responder", lazy=True)
     archives = db.relationship("Post", secondary="saved_blogs", backref="user")
+    profile = db.relationship("Profile", back_populates="users", uselist=False)
 
     @property
     def password(self):
@@ -40,6 +41,23 @@ class User(db.Model, UserMixin):
     #def check_password_correction(self, attempted_password):
         #return bcrypt.check_password_hash(self.password_hash, attempted_password)
 
+class Profile(db.Model):
+    id = db.Column(db.Integer(), primary_key=True, nullable=False)
+    name = db.Column(db.String(length=50), nullable=False)
+    username = db.Column(db.String(length=50), nullable=False)
+    bio =  db.Column(db.Text(), nullable=False)
+    profile_picture = db.Column(db.String(), nullable=True)
+    gmail_links = db.Column(db.String(), nullable=False)
+    facebook_links = db.Column(db.String(), nullable=True)
+    instagram_links =  db.Column(db.String(), nullable=True)
+    x_links = db.Column(db.String(), nullable=True)
+    linkedin_links = db.Column(db.String(), nullable=True)
+    github_links = db.Column(db.String(), nullable=True)
+    users_profile = db.Column(db.Integer(), db.ForeignKey("user.id"))
+    users = db.relationship("User", back_populates="profile")
+
+    def __repr__(self):
+        return f"Profile {self.id}"
 
 class Post(db.Model):
     id  = db.Column(db.Integer(), primary_key=True, nullable=False)

@@ -1,7 +1,7 @@
 from pencil import app
 from flask import render_template, redirect, url_for, flash, request, abort
-from pencil.models import Post, User, Comment, ReplyComment
-from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm
+from pencil.models import Post, User, Comment, ReplyComment, Profile
+from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm, ProfileForm
 from pencil import db
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
@@ -114,28 +114,41 @@ def blog_page():
                 return redirect(url_for("home_page"))
     return redirect(url_for("home_page"))
 
+@app.route("/saved", methods=["GET", "POST"])
+@login_required
+def save_page():
+    items = current_user.archives
+    return render_template("saved_items.html", items=items)
+
 @app.route("/modify-comment", methods=["POST", "GET"])
 @login_required
 def modify_comment():
     # Fetch the comment ID from request arguments
     comment_to_modify = request.args.get("comment_to_modify")
     if comment_to_modify is not None:
-        # Query for the comment
-        comments = Comment.query.filter_by(id=comment_to_modify).first()
-    # Initialize form with existing comment data if comment is found
-    form = CommentForm(obj=comments)
+        commnts = Comment.query.filter_by(id=comment_to_modify).first()
+        print("Comment retrieved:", commnts)  # Debugging print
+        # Check if the comment exists
+        if commnts is None:
+            flash("Comment not found. Please try again.", category="danger")
+            return redirect(url_for("blog_page"))
+
+    # Initialize form with existing comment data
+    form = CommentForm(obj=commnts)
+
     if request.method == "POST":
         if form.validate_on_submit():  # Ensure the form is valid
             # Update comment data
-            comments.text = form.comment.data
-            comments.modification_date = datetime.now()
+            commnts.text = form.comment.data
+            commnts.modification_date = datetime.now()
             db.session.commit()
             flash("The comment has been updated successfully.", category='success')
-            return redirect(url_for("blog_page", post_id=comments.commentatorr))
+            return redirect(url_for("blog_page", comment_to_modify=commnts.commentatorr))
         else:
-            return render_template("modify_comments.html", form=form, comments=comments)
+            return render_template("modify_comments.html", form=form, commnts=commnts)
+
     # Render the template whether or not the comment was found
-    return render_template("modify_comments.html", form=form, comments=comments)
+    return render_template("modify_comments.html", form=form, commnts=commnts)
 
 @app.route("/modify", methods=["POST", "GET"])
 @login_required
@@ -201,6 +214,41 @@ def delete_comment():
         flash(f"The comment has been removed successfully", category="success")
     return redirect(url_for("blog_page", post_id=comment_to_delete.commentatorr))
 
+@app.route("/profile", methods=["POST", "GET"])
+@login_required
+def profile():
+    profile_id = current_user
+    return render_template("profile.html", profile_id=profile_id)
+
+@app.route("/update-profile", methods=["POST", "GET"])
+@login_required
+def edit_profile():
+    profiles = request.args.get("profiles")
+    if profiles:
+        profile_to_update = Profile.query.filter_by(id=profiles)
+        if not profile_to_update:
+            flash(f"No profile account found with this name", category="info")
+            return redirect(url_for("home_page"))
+
+    form = ProfileForm(obj=profile_to_update)
+    if request.method == "POST":
+        if form.validate_on_submit(): # Ensure the form is valid
+            profile_to_update.profile.name = form.name.data
+            profile_to_update.profile.username = form.username.data
+            profile_to_update.profile.bio = form.bio.data
+            profile_to_update.profile.gmail_links = form.gmail.data
+            profile_to_update.profile.facebook_links = form.facebook.data
+            profile_to_update.profile.instagram_links = form.instagram.data
+            profile_to_update.profile.x_links = form.x.data
+            profile_to_update.profile.linkedin_links = form.linkedin.data
+            profile_to_update.profile.github_links = form.github.data
+            db.session.commit()
+            flash(f"Your profile updated successfully", category="success")
+            return redirect(url_for("profile", profile_id=profile_to_update.profile.users_profile))
+        else:
+            return render_template("modify_profile.html", form=form, profile_to_update=profile_to_update)
+    return render_template("modify_profile.html", form=form, profile_to_update=profile_to_update)
+
 # @app.route("/delete/<id>", methods=["POST"])
 # @login_required  
 # def delete_page(id):
@@ -216,12 +264,6 @@ def delete_comment():
         # db.session.commit()
         # flash(f"The blog has been removed successfully", category="success")
     # return redirect(url_for("home_page"))
-
-@app.route("/saved", methods=["GET", "POST"])
-@login_required
-def save_page():
-    items = current_user.archives
-    return render_template("saved_items.html", items=items)
 
 @app.route("/register", methods=["GET", "POST"])
 def register_page():
