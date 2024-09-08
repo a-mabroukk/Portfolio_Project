@@ -2,6 +2,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FileField
 from wtforms.validators import Length, EqualTo, Email, DataRequired, ValidationError
 from pencil.models import User, Post, Comment, ReplyComment, Profile
+import os
+from werkzeug.utils import secure_filename
 
 
 class RegisterForm(FlaskForm):
@@ -46,8 +48,8 @@ class ReplyForm(FlaskForm):
 class ProfileForm(FlaskForm):
     picture = FileField(label="Profile Picture", validators=[DataRequired()])
     name = StringField(label="Name", validators=[Length(min=2, max=30), DataRequired()])
-    username = StringField(label="Userame", validators=[Length(min=2, max=30), DataRequired()])
-    bio =  StringField(label="Bio", validators=[Length(min=2, max=30), DataRequired()])
+    username = StringField(label="Username", validators=[Length(min=2, max=30), DataRequired()])
+    bio =  StringField(label="Bio", validators=[Length(min=2, max=100), DataRequired()])
     gmail = StringField(label="Gmail", validators=[DataRequired()])
     facebook = StringField(label="Facebook", validators=[DataRequired()])
     instagram = StringField(label="Instagram", validators=[DataRequired()])

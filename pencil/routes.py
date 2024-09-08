@@ -1,11 +1,12 @@
 from pencil import app
 from flask import render_template, redirect, url_for, flash, request, abort
+from werkzeug.utils import secure_filename
 from pencil.models import Post, User, Comment, ReplyComment, Profile
 from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm, ProfileForm
 from pencil import db
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
-
+import os
 
 @app.route("/")
 @app.route("/home", methods=["GET", "POST"])
@@ -214,42 +215,75 @@ def delete_comment():
         flash(f"The comment has been removed successfully", category="success")
     return redirect(url_for("blog_page", post_id=comment_to_delete.commentatorr))
 
-@app.route("/profile", methods=["POST", "GET"])
+@app.route("/profile", methods=["GET"])
 @login_required
 def profile():
-    profile_id = current_user
-    return render_template("profile.html", profile_id=profile_id)
+    # Fetch the profile associated with the current user
+    profile_to_display = Profile.query.filter_by(users_profile=current_user.id).first()
+    
+    if not profile_to_display:
+        flash("No profile found. Please create one.", category="info")
+        return redirect(url_for("edit_profile"))
+
+    profile_picture_url = None
+    if profile_to_display.profile_picture:
+        profile_picture_url = url_for('static', filename=f'uploads/{profile_to_display.profile_picture}')
+    return render_template("profile.html", profile_id=profile_to_display, profile_picture_url=profile_picture_url)
 
 @app.route("/update-profile", methods=["POST", "GET"])
 @login_required
 def edit_profile():
-    profiles = current_user.id
-    if profiles:
-        profile_to_update = Profile.query.filter_by(users_profile=profiles).first()
-        if not profile_to_update:
-            flash(f"No profile account found with this name", category="info")
-            return redirect(url_for("home_page"))
+    profile_form = ProfileForm()
+    # Fetch the current user's profile if it exists
+    profile_to_update = Profile.query.filter_by(users_profile=current_user.id).first()
+    if profile_to_update:
 
-    form = ProfileForm(obj=profile_to_update)
+        if request.method == "POST":
+            if profile_form.validate_on_submit():  # Ensure the form is valid
+                if 'picture' in request.files:
+                    file = request.files['picture']
+                    if file.filename != '':
+                        filename = secure_filename(file.filename)
+                        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))  # Save the file
+                        profile_to_update.profile_picture = filename  # Save the filename to the database
+                if profile_to_update:
+                    # Update existing profile
+                    profile_to_update.name = profile_form.name.data
+                    profile_to_update.username = profile_form.username.data
+                    profile_to_update.bio = profile_form.bio.data
+                    profile_to_update.gmail_links = profile_form.gmail.data
+                    profile_to_update.facebook_links = profile_form.facebook.data
+                    profile_to_update.instagram_links = profile_form.instagram.data
+                    profile_to_update.x_links = profile_form.x.data
+                    profile_to_update.linkedin_links = profile_form.linkedin.data
+                    profile_to_update.github_links = profile_form.github.data
+                    db.session.commit()
+                    flash("Your profile was updated successfully", category="success")
+                    return redirect(url_for("profile"))
+    else:
+        if request.method == "POST":
+            if profile_form.validate_on_submit():
+                # Create a new profile if one does not exist
+                profile_to_update = Profile(profile_picture=profile_form.picture.data,
+                                            username=profile_form.username.data,
+                                            name=profile_form.name.data,
+                                            bio=profile_form.bio.data,
+                                            gmail_links=profile_form.gmail.data,
+                                            facebook_links=profile_form.facebook.data,
+                                            instagram_links=profile_form.instagram.data,
+                                            x_links=profile_form.x.data,
+                                            linkedin_links=profile_form.linkedin.data,
+                                            github_links=profile_form.github.data,
+                                            users_profile=current_user.id)
+                db.session.add(profile_to_update)
+                db.session.commit()
+                flash("Your profile was updated successfully", category="success")
+                return redirect(url_for("profile"))
 
-    if request.method == "POST":
-        if form.validate_on_submit(): # Ensure the form is valid
-            profile_to_update.profile_picture = form.picture.data
-            profile_to_update.name = form.name.data
-            profile_to_update.username = form.username.data
-            profile_to_update.bio = form.bio.data
-            profile_to_update.gmail_links = form.gmail.data
-            profile_to_update.facebook_links = form.facebook.data
-            profile_to_update.instagram_links = form.instagram.data
-            profile_to_update.x_links = form.x.data
-            profile_to_update.linkedin_links = form.linkedin.data
-            profile_to_update.github_links = form.github.data
-            db.session.commit()
-            flash(f"Your profile updated successfully", category="success")
-            return redirect(url_for("profile", profile_id=current_user.id))
-        else:
-            return render_template("modify_profile.html", form=form, profile_to_update=profile_to_update)
-    return render_template("modify_profile.html", form=form, profile_to_update=profile_to_update)
+        # Handle validation errors
+        for error_message in profile_form.errors.values():
+            flash(f"There was an error updating your profile: {error_message}", category="danger")
+    return render_template("modify_profile.html", form=profile_form, profile_to_update=profile_to_update)
 
 # @app.route("/delete/<id>", methods=["POST"])
 # @login_required  
@@ -271,19 +305,20 @@ def edit_profile():
 def register_page():
     form = RegisterForm()
 
-    if form.validate_on_submit():
-        user_to_create = User(username=form.username.data,
-                              email=form.email_address.data,
-                              password=form.password1.data)
-        db.session.add(user_to_create)
-        db.session.commit()
-        login_user(user_to_create)
-        flash(f"Account created successfully! You are now logged in as {user_to_create.username}", category='success')
-        return redirect(url_for("home_page"))
+    if request.method == "POST":
+        if form.validate_on_submit():
+            user_to_create = User(username=form.username.data,
+                                  email=form.email_address.data,
+                                  password=form.password1.data)
+            db.session.add(user_to_create)
+            db.session.commit()
+            login_user(user_to_create)
+            flash(f"Account created successfully! You are now logged in as {user_to_create.username}", category='success')
+            return redirect(url_for("home_page"))
 
-    if form.errors != {}:
-        for error_message in form.errors.values():
-            flash(f"There is an error with registing: {error_message}", category="danger")
+        if form.errors != {}:
+            for error_message in form.errors.values():
+                flash(f"There is an error with registing: {error_message}", category="danger")
     return render_template("register.html", form=form)
 
 @app.route("/login", methods=["GET", "POST"])

@@ -8,10 +8,11 @@
     <div class="container mt-5">
         <section>
             <div>
-                <form action="/profile" method="POST" enctype="multipart/form-data">
-                    <input type="file" name="profile_picture" accept="image/*" required>
-                    <button type="submit">Upload Picture</button>
-                </form>
+                {% if profile_picture_url %}
+                    <img src="{{ profile_picture_url }}" alt="Profile Picture" width="200">
+                {% else %}
+                    <p>No profile picture uploaded</p>
+                {% endif %}
             </div>
             <div>
                 <p class="text-muted">Author: {{ profile_id.name }}</p>
@@ -22,7 +23,7 @@
             <br>
             <div>
                 <!-- Edit Button -->
-            <a href="{{ url_for('edit_profile', profiles=profile_id.id) }}" class="btn btn-primary mt-3">Edit</a>
+            <a href="{{ url_for('edit_profile') }}" class="btn btn-primary mt-3">Edit</a>
             <a href="{{ url_for('home_page') }}" class="btn btn-secondary">Back</a>
             </div>
         </section>
@@ -56,24 +57,26 @@
                 <header>
                     <h3>Contact Us</h3>
                 </header>
-                <ul>
-                    <li>
-                        <a href="https://mail.google.com/mail/u/0/#inbox">Gmail</a>
-                    </li>
-                    <li>
-                        <a href="https://www.facebook.com/HolbertonSchool/">Facebook</a>
-                    </li>
-                    
-                    <li>
-                        <a href="https://twitter.com/holbertonschool">Twitter</a>
-                    </li>
-                    <li>
-                        <a href="https://www.instagram.com/holbertonschool/">Instagram</a>
-                    </li>
-                    <li>
-                        <a href="https://github.com/a-mabroukk/Portfolio_Project/blob/main/pencil/routes.py">GitHub</a>
-                    </li>
-                </ul>
+                <!-- Display Links -->
+                <h3>Contact Links</h3>
+                {% if profile_id.gmail_links %}
+                    <p>Email: <a href="mailto:{{ profile_id.gmail_links }}">{{ profile_id.gmail_links }}</a></p>
+                {% endif %}
+                {% if profile_id.facebook_links %}
+                    <p>Facebook: <a href="{{ profile_id.facebook_links }}" target="_blank">{{ profile_id.facebook_links }}</a></p>
+                {% endif %}
+                {% if profile_id.instagram_links %}
+                    <p>Instagram: <a href="{{ profile_id.instagram_links }}" target="_blank">{{ profile_id.instagram_links }}</a></p>
+                {% endif %}
+                {% if profile_id.x_links %}
+                    <p>X (X): <a href="{{ profile_id.x_links }}" target="_blank">{{ profile_id.x_links }}</a></p>
+                {% endif %}
+                {% if profile_id.linkedin_links %}
+                    <p>LinkedIn: <a href="{{ profile_id.linkedin_links }}" target="_blank">{{ profile_id.linkedin_links }}</a></p>
+                {% endif %}
+                {% if profile_id.github_links %}
+                    <p>GitHub: <a href="{{ profile_id.github_links }}" target="_blank">{{ profile_id.github_links }}</a></p>
+                {% endif %}
             </div>
         </section>
     </div>
