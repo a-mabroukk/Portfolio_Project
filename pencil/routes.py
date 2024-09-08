@@ -225,12 +225,13 @@ def profile():
 def edit_profile():
     profiles = current_user.id
     if profiles:
-        profile_to_update = Profile.query.filter_by(users_profile=profiles)
+        profile_to_update = Profile.query.filter_by(users_profile=profiles).first()
         if not profile_to_update:
             flash(f"No profile account found with this name", category="info")
             return redirect(url_for("home_page"))
 
     form = ProfileForm(obj=profile_to_update)
+
     if request.method == "POST":
         if form.validate_on_submit(): # Ensure the form is valid
             profile_to_update.profile_picture = form.picture.data
