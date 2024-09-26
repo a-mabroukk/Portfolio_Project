@@ -1,7 +1,7 @@
 from pencil import app
 from flask import render_template, redirect, url_for, flash, request, abort
 from werkzeug.utils import secure_filename
-from pencil.models import Post, User, Comment, ReplyComment, Profile
+from pencil.models import Post, User, Comment, ReplyComment, Profile, Role
 from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm, ProfileForm
 from pencil import db
 from flask_login import login_user, logout_user, login_required, current_user
@@ -220,15 +220,7 @@ def delete_comment():
 def profile():
     # Fetch the profile associated with the current user
     profile_to_display = Profile.query.filter_by(users_profile=current_user.id).first()
-    
-    if not profile_to_display:
-        flash("No profile found. Please create one.", category="info")
-        return redirect(url_for("edit_profile"))
-
-    profile_picture_url = None
-    if profile_to_display.profile_picture:
-        profile_picture_url = url_for('static', filename=f'uploads/{profile_to_display.profile_picture}')
-    return render_template("profile.html", profile_id=profile_to_display, profile_picture_url=profile_picture_url)
+    return render_template("profile.html", profile_id=profile_to_display)
 
 @app.route("/update-profile", methods=["POST", "GET"])
 @login_required
@@ -237,7 +229,7 @@ def edit_profile():
     # Fetch the current user's profile if it exists
     profile_to_update = Profile.query.filter_by(users_profile=current_user.id).first()
     if profile_to_update:
-
+        profile_form = ProfileForm(obj=profile_to_update)
         if request.method == "POST":
             if profile_form.validate_on_submit():  # Ensure the form is valid
                 if 'picture' in request.files:
@@ -245,7 +237,9 @@ def edit_profile():
                     if file.filename != '':
                         filename = secure_filename(file.filename)
                         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))  # Save the file
-                        profile_to_update.profile_picture = filename  # Save the filename to the database
+                        original_filename, extension = os.path.splitext(file.filename)
+                        profile_to_update.profile_picture = f"{original_filename}{extension}"
+                        db.session.commit()
                 if profile_to_update:
                     # Update existing profile
                     profile_to_update.name = profile_form.name.data
@@ -307,9 +301,16 @@ def register_page():
 
     if request.method == "POST":
         if form.validate_on_submit():
+            #user_to_create = User.query.filter_by(email=request.form.email_address).first()
+            # if user already exists render the message
+            #if user_to_create:
+                #flash(f"The email address provided is already in use", category="danger")
+                # render signup.html if user exists
+                #return render_template('register.html')
             user_to_create = User(username=form.username.data,
                                   email=form.email_address.data,
                                   password=form.password1.data)
+            user_to_create.roles.append(Role(name='Client'))
             db.session.add(user_to_create)
             db.session.commit()
             login_user(user_to_create)

@@ -8,8 +8,8 @@
     <div class="container mt-5">
         <section>
             <div>
-                {% if profile_picture_url %}
-                    <img src="{{ profile_picture_url }}" alt="Profile Picture" width="200">
+                {% if profile_id.profile_picture %}
+                    <img src="{{ url_for('static', filename='uploads/' ~ profile_id.profile_picture) }}" alt="Profile Picture">
                 {% else %}
                     <p>No profile picture uploaded</p>
                 {% endif %}
