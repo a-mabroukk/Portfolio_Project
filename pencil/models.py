@@ -153,9 +153,11 @@ class Comment(db.Model):
         return f"Comment {self.id}"
 
 class ReplyComment(db.Model):
+    __tablename__ = "replycomment"
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     text = db.Column(db.Text(), nullable=False)
     publication_date = db.Column(db.DateTime, default=datetime.utcnow())
     modification_date = db.Column(db.DateTime, default=datetime.utcnow())
     responder = db.Column(db.Integer(), db.ForeignKey("user.id"))
     reply_comment = db.Column(db.Integer(), db.ForeignKey("comment.id"))
+    reply_to_reply = db.Column(db.Integer(), db.ForeignKey("replycomment.id"))

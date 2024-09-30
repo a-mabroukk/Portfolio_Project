@@ -2,7 +2,7 @@ from pencil import app
 from flask import render_template, redirect, url_for, flash, request, abort
 from werkzeug.utils import secure_filename
 from pencil.models import Post, User, Comment, ReplyComment, Profile, Role
-from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm, ProfileForm
+from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm, ProfileForm, ReplyReplyForm
 from sqlalchemy.orm import joinedload
 #from pencil.member_role import create_role_member
 from pencil import db
@@ -61,6 +61,7 @@ def posting_page():
 def blog_page():
     comment_form = CommentForm()
     reply_form = ReplyForm()
+    replies_reply_form = ReplyReplyForm()
 
     post_id = request.args.get("post_id")
     if post_id:
@@ -97,15 +98,28 @@ def blog_page():
                         reply_id = reply_to_post.id
                         flash(f"Thanks for your comment", category="success")
                         return redirect(url_for("blog_page", reply_id=reply_id))
+                if  replies_reply_form.validate_on_submit():
+                    comment_id = request.form.get("comment_id")
+                    reply_id = request.form.get("reply_id")
+                    if reply_id and comment_id:
+                        replies_to_reply = ReplyComment(text=replies_reply_form.reply_to_reply.data, responder=current_user.id,
+                                                     reply_comment=comment_id, reply_to_reply=reply_id)
+                        db.session.add(replies_to_reply)
+                        db.session.commit()
+                        reply_reply_id = replies_to_reply.id
+                        flash(f"Thanks for your comment", category="success")
+                        return redirect(url_for("blog_page", reply_reply_id=reply_reply_id))
             if request.method == "GET":
                 # Display a specific blog with its comments and the replies associated with those comments
-                comment_with_replies = (db.session.query(Comment).outerjoin(ReplyComment, Comment.id == ReplyComment.reply_comment)
+                comment_with_replies = (db.session.query(Comment).outerjoin(ReplyComment, Comment.id == ReplyComment.reply_comment)  # Join replies
+                                        .outerjoin(ReplyComment, ReplyComment.id == ReplyComment.reply_to_reply)  # Join replies on replies
                                         .options(joinedload(Comment.reply_comments))  # Load replies with comments
+                                        .options(joinedload(ReplyComment.reply_to_reply))  # Load replies on replies
                                         .filter(Comment.comments_on_post == post_id)
-                                        .order_by(Comment.publication_date.desc(), ReplyComment.publication_date.desc()).all())
+                                        .order_by(Comment.publication_date.desc()).all())
 
                 return render_template("blog.html", post_id=requested_blog, comment_form=comment_form,
-                                        posted_comments=comment_with_replies, reply_form=reply_form)
+                                        posted_comments=comment_with_replies, reply_form=reply_form, replies_reply_form=replies_reply_form)
             else:
                 flash(f"Blog not found", category="danger")
                 return redirect(url_for("home_page"))

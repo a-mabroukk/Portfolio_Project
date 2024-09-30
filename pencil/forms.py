@@ -45,6 +45,10 @@ class ReplyForm(FlaskForm):
     reply = TextAreaField(label="reply comment", validators=[DataRequired()])
     submit = SubmitField(label="Send")
 
+class ReplyReplyForm(FlaskForm):
+    reply_to_reply = TextAreaField(label="Write your reply", validators=[DataRequired()])
+    submit = SubmitField(label="Send")
+
 class ProfileForm(FlaskForm):
     picture = FileField(label="Profile Picture", validators=[DataRequired()])
     name = StringField(label="Name", validators=[Length(min=2, max=30), DataRequired()])
