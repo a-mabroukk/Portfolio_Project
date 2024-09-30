@@ -36,7 +36,7 @@
             <div class="row mt-4">
                 {% if profile_id %}
                     <div class="list-group">
-                        {% for post in profile_id.posts %}
+                        {% for post in profile_id.users.posts %}
                             <a href="{{ url_for('blog_page', post_id=post.id) }}" class="list-group-item list-group-item-action">
                                 <img src="https://via.placeholder.com/150" class="card-img-left" alt="{{ post.pictures }}">
                                 <h2>{{ post.title }}</h5>

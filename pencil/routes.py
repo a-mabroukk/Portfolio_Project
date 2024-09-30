@@ -3,6 +3,8 @@ from flask import render_template, redirect, url_for, flash, request, abort
 from werkzeug.utils import secure_filename
 from pencil.models import Post, User, Comment, ReplyComment, Profile, Role
 from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm, ProfileForm
+from sqlalchemy.orm import joinedload
+#from pencil.member_role import create_role_member
 from pencil import db
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
@@ -78,8 +80,8 @@ def blog_page():
 
                 if comment_form.validate_on_submit():
                     comment_to_post = Comment(text=comment_form.comment.data,
-                                              commentator=current_user.id,
-                                              commentatorr=requested_blog.id)
+                                              comment_owner=current_user.id,
+                                              comments_on_post=requested_blog.id)
                     db.session.add(comment_to_post)
                     db.session.commit()
                     comment_id = comment_to_post.id
@@ -97,22 +99,18 @@ def blog_page():
                         return redirect(url_for("blog_page", reply_id=reply_id))
             if request.method == "GET":
                 # Display a specific blog with its comments and the replies associated with those comments
-                comment_with_replies = (db.session.query(Comment, ReplyComment).outerjoin(ReplyComment, Comment.id == ReplyComment.reply_comment)
-                                        .filter(Comment.commentatorr == post_id).order_by(Comment.publication_date.desc(), ReplyComment.publication_date.desc())).all()
-                posted_comments = {}
-                for comment, reply in comment_with_replies:
-                    if comment.id not in posted_comments:
-                        posted_comments[comment.id] = {
-                        'comment': comment,
-                        'replies': []
-                    }
-                    if reply:
-                        posted_comments[comment.id]['replies'].append(reply)
-                return render_template("blog.html", post_id=requested_blog, comment_form=comment_form, posted_comments=posted_comments.values(),
-                                        reply_form=reply_form)
+                comment_with_replies = (db.session.query(Comment).outerjoin(ReplyComment, Comment.id == ReplyComment.reply_comment)
+                                        .options(joinedload(Comment.reply_comments))  # Load replies with comments
+                                        .filter(Comment.comments_on_post == post_id)
+                                        .order_by(Comment.publication_date.desc(), ReplyComment.publication_date.desc()).all())
+
+                return render_template("blog.html", post_id=requested_blog, comment_form=comment_form,
+                                        posted_comments=comment_with_replies, reply_form=reply_form)
             else:
                 flash(f"Blog not found", category="danger")
                 return redirect(url_for("home_page"))
+    for error_message in reply_form.errors.values():
+        flash(f"There was an error : {error_message}", category="danger")
     return redirect(url_for("home_page"))
 
 @app.route("/saved", methods=["GET", "POST"])
@@ -144,12 +142,42 @@ def modify_comment():
             commnts.modification_date = datetime.now()
             db.session.commit()
             flash("The comment has been updated successfully.", category='success')
-            return redirect(url_for("blog_page", comment_to_modify=commnts.commentatorr))
+            return redirect(url_for("blog_page", comment_to_modify=commnts.comments_on_post))
         else:
             return render_template("modify_comments.html", form=form, commnts=commnts)
 
     # Render the template whether or not the comment was found
     return render_template("modify_comments.html", form=form, commnts=commnts)
+
+
+@app.route("/edit-reply-on-comment", methods=["POST", "GET"])
+@login_required
+def update_reply():
+    # Fetch the comment ID from request arguments
+    reply_to_modify = request.args.get("reply_to_modify")
+    if reply_to_modify is not None:
+        replies = ReplyComment.query.filter_by(id=reply_to_modify).first()
+        # Check if the comment exists
+        if replies is None:
+            flash("Comment not found. Please try again.", category="danger")
+            return redirect(url_for("blog_page"))
+
+    # Initialize form with existing comment data
+    form = ReplyForm(obj=replies)
+
+    if request.method == "POST":
+        if form.validate_on_submit():  # Ensure the form is valid
+            # Update comment data
+            replies.text = form.reply.data
+            replies.modification_date = datetime.now()
+            db.session.commit()
+            flash("The comment has been updated successfully.", category='success')
+            return redirect(url_for("blog_page", reply_to_modify=replies.reply_comment))
+        else:
+            return render_template("edit_reply_to_comment.html", form=form, replies=replies)
+
+    # Render the template whether or not the comment was found
+    return render_template("edit_reply_to_comment.html", form=form, replies=replies)
 
 @app.route("/modify", methods=["POST", "GET"])
 @login_required
@@ -213,14 +241,39 @@ def delete_comment():
         db.session.delete(comment_to_delete)
         db.session.commit()
         flash(f"The comment has been removed successfully", category="success")
-    return redirect(url_for("blog_page", post_id=comment_to_delete.commentatorr))
+    return redirect(url_for("blog_page", post_id=comment_to_delete.comments_on_post))
+
+@app.route("/delete-reply-comment", methods=["POST", "GET"])
+@login_required  
+def delete_reply():
+    reply_id = request.args.get("reply_id")
+    if reply_id:
+        reply_to_delete = ReplyComment.query.filter_by(id=reply_id).first()
+        if not reply_to_delete:
+            flash("The comment is no longer available.", category="danger")
+            return redirect(url_for("home_page"))
+
+        db.session.delete(reply_to_delete)
+        db.session.commit()
+        flash(f"The comment has been removed successfully", category="success")
+    return redirect(url_for("blog_page", post_id=reply_to_delete.comments_on_post))
 
 @app.route("/profile", methods=["GET"])
 @login_required
 def profile():
-    # Fetch the profile associated with the current user
-    profile_to_display = Profile.query.filter_by(users_profile=current_user.id).first()
-    return render_template("profile.html", profile_id=profile_to_display)
+
+    profile_id =  request.args.get("profile_id")
+    if profile_id:
+        # Fetch the profile associated with the user
+        profile_to_display = Profile.query.filter_by(users_profile=profile_id).first()
+        print("profile retrieved:", profile_to_display)
+        if profile_to_display:
+            print("profile retrieved:", profile_to_display)
+            return render_template("profile.html", profile_id=profile_to_display)
+        else:
+            flash(f"No profile with this name", category="danger")
+            return redirect(url_for("home_page"))
+    return redirect(url_for("home_page"))
 
 @app.route("/update-profile", methods=["POST", "GET"])
 @login_required
@@ -299,6 +352,7 @@ def edit_profile():
 def register_page():
     form = RegisterForm()
 
+
     if request.method == "POST":
         if form.validate_on_submit():
             #user_to_create = User.query.filter_by(email=request.form.email_address).first()
@@ -310,7 +364,10 @@ def register_page():
             user_to_create = User(username=form.username.data,
                                   email=form.email_address.data,
                                   password=form.password1.data)
-            user_to_create.roles.append(Role(name='Client'))
+
+            #member_role = Role.query.filter_by(name='Member').first()
+            #if member_role:  # Ensure the role exists
+                #user_to_create.roles.append(member_role)
             db.session.add(user_to_create)
             db.session.commit()
             login_user(user_to_create)

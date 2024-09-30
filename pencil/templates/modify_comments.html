@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}
-    Modify your comment
+    Edit your comment
 {% endblock %}
 
 {% block content %}
@@ -18,8 +18,8 @@
             </div>
     
             <!-- Submit Button -->
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-            <a href="{{ url_for('blog_page', post_id=commnts.commentatorr) }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Update</button>
+            <a href="{{ url_for('blog_page', post_id=commnts.comments_on_post) }}" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
 </body>

@@ -20,13 +20,13 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(length=50), nullable=False, unique=True)
     password_hash = db.Column(db.String(length=100), nullable=False)
     posts = db.relationship("Post", backref="owned_user", lazy=True)
-    comments = db.relationship("Comment", backref="owned_commentator", lazy=True)
+    commentators = db.relationship("Comment", backref="owned_commentator", lazy=True)
     replies = db.relationship("ReplyComment", backref="owned_responder", lazy=True)
     archives = db.relationship("Post", secondary="saved_blogs", backref="user")
     profile = db.relationship("Profile", back_populates="users", uselist=False)
     store = db.relationship("Store", back_populates="owner", uselist=False)
+    roles = db.relationship('Role', secondary='user_role', backref="user")
     buyer = db.relationship("Sales", backref="book_buyers", lazy=True)
-    role = db.relationship('Role', overlaps='roles,user', viewonly=True)
 
     @property
     def password(self):
@@ -48,17 +48,19 @@ class User(db.Model, UserMixin):
 class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     name = db.Column(db.String(length=50), nullable=False)
-    users = db.relationship('User', overlaps='role')
-    
+    users = db.relationship("User", secondary="user_role", backref="role")
 
-class UserRole(db.Model):
-    __tablename__ = "user_role"
-    id = db.Column(db.Integer(), primary_key=True, nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey("user.id"))
-    role_id = db.Column(db.Integer(), db.ForeignKey("role.id"))
+    def __repr__(self):
+        return f"Role {self.id}"
 
 # user_datastore = SQLAlchemySessionUserDatastore(db.session, User, Role)
 # security = Security(app, user_datastore)
+
+class UserRole(db.Model):
+    __tablename__ = "user_role"
+    id  = db.Column(db.Integer(), primary_key=True, nullable=False)
+    user_id = db.Column(db.Integer(), db.ForeignKey("user.id"))
+    role_id = db.Column(db.Integer(), db.ForeignKey("role.id"))
 
 class Profile(db.Model):
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
@@ -73,6 +75,7 @@ class Profile(db.Model):
     linkedin_links = db.Column(db.String(), nullable=True)
     github_links = db.Column(db.String(), nullable=True)
     users_profile = db.Column(db.Integer(), db.ForeignKey("user.id"))
+    owned_posts = db.relationship("Post", backref="blogs", lazy=True)
     users = db.relationship("User", back_populates="profile")
 
     def __repr__(self):
@@ -85,8 +88,9 @@ class Post(db.Model):
     publication_date = db.Column(db.DateTime, default=datetime.utcnow())
     modification_date = db.Column(db.DateTime, default=datetime.utcnow())
     owner = db.Column(db.Integer(), db.ForeignKey("user.id"))
+    profile_owner = db.Column(db.Integer(), db.ForeignKey("profile.id"))
     saved_posts = db.relationship("User", secondary="saved_blogs", backref="post")
-    commentators = db.relationship("Comment", backref="owned_commentators", lazy=True)
+    post_comments = db.relationship("Comment", backref="owned_comments", lazy=True)
         
     def __repr__(self):
         return f"Post {self.id}"
@@ -142,8 +146,8 @@ class Comment(db.Model):
     text = db.Column(db.Text(), nullable=False)
     publication_date = db.Column(db.DateTime, default=datetime.utcnow())
     modification_date = db.Column(db.DateTime, default=datetime.utcnow())
-    commentator = db.Column(db.Integer(), db.ForeignKey("user.id"))
-    commentatorr = db.Column(db.Integer(), db.ForeignKey("post.id"))
+    comment_owner = db.Column(db.Integer(), db.ForeignKey("user.id"))
+    comments_on_post = db.Column(db.Integer(), db.ForeignKey("post.id"))
     reply_comments =  db.relationship("ReplyComment", backref="owned_replies", lazy=True)
     def __repr__(self):
         return f"Comment {self.id}"

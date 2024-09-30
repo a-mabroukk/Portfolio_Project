@@ -4,7 +4,7 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 import os  # Import the os module here
 from werkzeug.utils import secure_filename
-from flask_security import Security, SQLAlchemyUserDatastore
+#from flask_security import Security, SQLAlchemyUserDatastore
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///pencil.db"
@@ -23,6 +23,6 @@ login_manager.login_message_category = "info"
 from pencil.models import User, Role  # Ensure these are imported here
 
 # Setup Flask-Security
-user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-security = Security(app, user_datastore)
+#user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+#security = Security(app, user_datastore)
 from pencil import routes
