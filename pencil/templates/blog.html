@@ -85,7 +85,7 @@
 
                                 <!-- Reply Form -->
                                 <div id="reply-form-{{ comment.id }}" class="reply-form" style="display: none; margin-top: 10px;">
-                                    <form action="{{ url_for('blog_page') }}" method="POST">
+                                    <form action="{{ url_for('blog_page', post_id=post_id.id) }}" method="POST">
                                         {{ reply_form.hidden_tag() }}
                                             <textarea name="reply" required placeholder="Write your reply..." class="form-control"></textarea>
                                             <input type="hidden" name="comment_id" value="{{ comment.id }}">
@@ -106,7 +106,19 @@
                                     <p>{{ reply.text }}</p>
       
                                     <span class="text-black-800 mr-3 font-weight-600">{{ reply.publication_date }}</span>
-                                    <a class="text-primary font-weight-600" href="#!">Reply</a>
+                                    <!--<a class="text-primary font-weight-600" href="#!">Reply</a>-->
+                             
+                                    <!-- Reply Button -->
+                                    <a class="text-primary font-weight-600 reply-button" data-comment-id="{{ reply.id }}" href="javascript:void(0);">Reply</a>
+                                    <!-- Reply Form -->
+                                    <div id="reply-form-{{ reply.id }}" class="reply-form" style="display: none; margin-top: 10px;">
+                                        <form action="{{ url_for('blog_page', post_id=post_id.id) }}" method="POST">
+                                            {{ reply_form.hidden_tag() }}
+                                                <textarea name="reply" required placeholder="Write your reply..." class="form-control"></textarea>
+                                                <input type="hidden" name="comment_id" value="{{ reply.id }}">
+                                                <button class="btn btn-primary" type="submit">Comment Now</button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         {% endfor %}
