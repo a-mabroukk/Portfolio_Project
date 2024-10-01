@@ -161,3 +161,4 @@ class ReplyComment(db.Model):
     responder = db.Column(db.Integer(), db.ForeignKey("user.id"))
     reply_comment = db.Column(db.Integer(), db.ForeignKey("comment.id"))
     reply_to_reply = db.Column(db.Integer(), db.ForeignKey("replycomment.id"))
+    child_replies = db.relationship("ReplyComment", backref=db.backref("parent_reply", remote_side=[id]), lazy=True)

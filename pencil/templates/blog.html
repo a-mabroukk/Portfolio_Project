@@ -94,7 +94,7 @@
                                 </div>
                             </div>
                         </div>
-                        {% for reply in comment.reply_comments.reply_to_reply %}
+                        {% for reply in comment.reply_comments %}
                             <div class="media d-block d-sm-flex">
                                 <div class="d-inline-block mr-2 mb-3 mb-md-0" href="{{ url_for('profile', profile_id=reply.responder) }}">
                                     <img class="mr-3" src="static/images/post/arrow.png" alt="">
@@ -107,7 +107,6 @@
       
                                     <span class="text-black-800 mr-3 font-weight-600">{{ reply.publication_date }}</span>
                                     <!--<a class="text-primary font-weight-600" href="#!">Reply</a>-->
-                             
                                     <!-- Reply Button -->
                                     <a class="text-primary font-weight-600 reply-button" data-comment-id="{{ reply.id }}" href="javascript:void(0);">Reply</a>
                                     <!-- Reply Form -->
@@ -116,9 +115,40 @@
                                             {{ replies_reply_form.hidden_tag() }}
                                                 <textarea name="reply_to_reply" required placeholder="Write your reply..." class="form-control"></textarea>
                                                 <input type="hidden" name="reply_id" value="{{ reply.id }}">
+                                                <input type="hidden" name="comment_id" value="{{ comment.id }}">
                                                 <button class="btn btn-primary" type="submit">Comment Now</button>
                                         </form>
                                     </div>
+                                    {% for child_reply in reply.child_replies %}
+                                        <div class="reply-to-reply">
+                                            <div class="media d-block d-sm-flex ml-3">
+                                                <div class="d-inline-block mr-2 mb-3 mb-md-0" href="{{ url_for('profile', profile_id=reply.responder) }}">
+                                                    <img class="mr-3" src="static/images/post/arrow.png" alt="">
+                                                    <a href="#!"><img src="static/images/post/user-02.jpg" class="mr-3 rounded-circle" alt=""></a>
+                                                </div>
+                                                <div class="media-body">
+                                                    <a href="{{ url_for('profile', profile_id=reply.responder) }}" class="h4 d-inline-block mb-3">{{ reply.responder.username }}</a>
+      
+                                                    <p>{{ reply.text }}</p>
+      
+                                                    <span class="text-black-800 mr-3 font-weight-600">{{ reply.publication_date }}</span>
+                                                    <!--<a class="text-primary font-weight-600" href="#!">Reply</a>-->
+                                                                                        <!-- Reply Button -->
+                                                    <a class="text-primary font-weight-600 child-reply-button" data-reply-id="{{ child_reply.id }}" href="javascript:void(0);">Reply</a>
+                                                    <!-- Reply Form -->
+                                                    <div id="child-reply-form-{{ child_reply.id }}" class="child-reply-form" style="display: none; margin-top: 10px;">
+                                                        <form action="{{ url_for('blog_page', post_id=post_id.id) }}" method="POST">
+                                                            {{ replies_reply_form.hidden_tag() }}
+                                                                <textarea name="reply_to_reply" required placeholder="Write your reply..." class="form-control"></textarea>
+                                                                <input type="hidden" name="reply_id" value="{{ child_reply.id }}">
+                                                                <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                                                                <button class="btn btn-primary" type="submit">Comment Now</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
                                 </div>
                             </div>
                         {% endfor %}
@@ -128,6 +158,16 @@
                             button.addEventListener('click', function() {
                                 const commentId = this.getAttribute('data-comment-id');
                                 const form = document.getElementById(`reply-form-${commentId}`);
+                                // Toggle visibility
+                                form.style.display = form.style.display === "none" ? "block" : "none";
+                            });
+                        });
+                    </script>
+                    <script>
+                        document.querySelectorAll('.child-reply-button').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const replyId = this.getAttribute('data-reply-id');
+                                const form = document.getElementById(`child-reply-form-${replyId}`);
                                 // Toggle visibility
                                 form.style.display = form.style.display === "none" ? "block" : "none";
                             });

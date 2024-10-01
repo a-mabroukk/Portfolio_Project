@@ -111,11 +111,8 @@ def blog_page():
                         return redirect(url_for("blog_page", reply_reply_id=reply_reply_id))
             if request.method == "GET":
                 # Display a specific blog with its comments and the replies associated with those comments
-                comment_with_replies = (db.session.query(Comment).outerjoin(ReplyComment, Comment.id == ReplyComment.reply_comment)  # Join replies
-                                        .outerjoin(ReplyComment, ReplyComment.id == ReplyComment.reply_to_reply)  # Join replies on replies
-                                        .options(joinedload(Comment.reply_comments))  # Load replies with comments
-                                        .options(joinedload(ReplyComment.reply_to_reply))  # Load replies on replies
-                                        .filter(Comment.comments_on_post == post_id)
+                comment_with_replies = (db.session.query(Comment).filter(Comment.comments_on_post == post_id).options(
+                                        joinedload(Comment.reply_comments).joinedload(ReplyComment.child_replies))
                                         .order_by(Comment.publication_date.desc()).all())
 
                 return render_template("blog.html", post_id=requested_blog, comment_form=comment_form,
@@ -325,8 +322,7 @@ def edit_profile():
         if request.method == "POST":
             if profile_form.validate_on_submit():
                 # Create a new profile if one does not exist
-                profile_to_update = Profile(profile_picture=profile_form.picture.data,
-                                            username=profile_form.username.data,
+                profile_to_update = Profile(username=profile_form.username.data,
                                             name=profile_form.name.data,
                                             bio=profile_form.bio.data,
                                             gmail_links=profile_form.gmail.data,
@@ -336,6 +332,14 @@ def edit_profile():
                                             linkedin_links=profile_form.linkedin.data,
                                             github_links=profile_form.github.data,
                                             users_profile=current_user.id)
+                if 'picture' in request.files:
+                    file = request.files['picture']
+                    if file.filename != '':
+                        filename = secure_filename(file.filename)
+                        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))  # Save the file
+                        original_filename, extension = os.path.splitext(file.filename)
+                        profile_to_update.profile_picture = f"{original_filename}{extension}"  
+
                 db.session.add(profile_to_update)
                 db.session.commit()
                 flash("Your profile was updated successfully", category="success")
