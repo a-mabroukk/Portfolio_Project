@@ -1,7 +1,7 @@
 from pencil import app
 from flask import render_template, redirect, url_for, flash, request, abort
 from werkzeug.utils import secure_filename
-from pencil.models import Post, User, Comment, ReplyComment, ReplyComment, Profile, Role
+from pencil.models import Post, User, Comment, ReplyComment, ChildReply, Profile, Role
 from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm, ProfileForm, ReplyReplyForm
 from sqlalchemy.orm import joinedload
 #from pencil.member_role import create_role_member
