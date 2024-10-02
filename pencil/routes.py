@@ -1,7 +1,7 @@
 from pencil import app
 from flask import render_template, redirect, url_for, flash, request, abort
 from werkzeug.utils import secure_filename
-from pencil.models import Post, User, Comment, ReplyComment, Profile, Role
+from pencil.models import Post, User, Comment, ReplyComment, ReplyComment, Profile, Role
 from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm, ProfileForm, ReplyReplyForm
 from sqlalchemy.orm import joinedload
 #from pencil.member_role import create_role_member
@@ -101,10 +101,9 @@ def blog_page():
                 if  replies_reply_form.validate_on_submit():
                     print("ggghh", replies_reply_form)
                     reply_id = request.form.get("reply_id")
-                    comment_id = request.form.get("comment_id")
-                    if reply_id and comment_id:
-                        replies_to_reply = ReplyComment(text=replies_reply_form.reply_to_reply.data, responder=current_user.id,
-                                                        reply_comment=comment_id, reply_to_reply=reply_id)
+                    if reply_id:
+                        replies_to_reply = ChildReply(text=replies_reply_form.reply_reply.data, child_reply_owner=current_user.id,
+                                                      replies_reply=reply_id)
                         db.session.add(replies_to_reply)
                         db.session.commit()
                         reply_reply_id = replies_to_reply.id
@@ -113,7 +112,7 @@ def blog_page():
             if request.method == "GET":
                 # Display a specific blog with its comments and the replies associated with those comments
                 comment_with_replies = (db.session.query(Comment).filter(Comment.comments_on_post == post_id).options(
-                                        joinedload(Comment.reply_comments).joinedload(ReplyComment.child_replies))
+                                        joinedload(Comment.reply_comments).joinedload(ReplyComment.replies_on_reply))
                                         .order_by(Comment.publication_date.desc()).all())
 
                 return render_template("blog.html", post_id=requested_blog, comment_form=comment_form,

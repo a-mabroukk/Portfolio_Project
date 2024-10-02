@@ -46,7 +46,7 @@ class ReplyForm(FlaskForm):
     submit = SubmitField(label="Send")
 
 class ReplyReplyForm(FlaskForm):
-    reply_to_reply = TextAreaField(label="Write your reply", validators=[DataRequired()])
+    reply_reply = TextAreaField(label="Write your reply", validators=[DataRequired()])
     submit = SubmitField(label="Send")
 
 class ProfileForm(FlaskForm):

@@ -22,6 +22,7 @@ class User(db.Model, UserMixin):
     posts = db.relationship("Post", backref="owned_user", lazy=True)
     commentators = db.relationship("Comment", backref="owned_commentator", lazy=True)
     replies = db.relationship("ReplyComment", backref="owned_responder", lazy=True)
+    small_replies = db.relationship("ChildReply", backref="who_reply", lazy=True)
     archives = db.relationship("Post", secondary="saved_blogs", backref="user")
     profile = db.relationship("Profile", back_populates="users", uselist=False)
     store = db.relationship("Store", back_populates="owner", uselist=False)
@@ -160,6 +161,17 @@ class ReplyComment(db.Model):
     modification_date = db.Column(db.DateTime, default=datetime.utcnow())
     responder = db.Column(db.Integer(), db.ForeignKey("user.id"))
     reply_comment = db.Column(db.Integer(), db.ForeignKey("comment.id"))
-    reply_to_reply = db.Column(db.Integer(), db.ForeignKey("replycomment.id"))
-    
-    child_replies = db.relationship("ReplyComment", backref=db.backref("parent_reply", remote_side=[id]), lazy=True)
+    replies_on_reply = db.relationship("ChildReply", backref="children", lazy=True)
+    def __repr__(self):
+        return f"ReplyComment {self.id}"
+
+class ChildReply(db.Model):
+    __tablename__ = "childreply"
+    id = db.Column(db.Integer(), primary_key=True, nullable=False)
+    text = db.Column(db.Text(), nullable=False)
+    publication_date = db.Column(db.DateTime, default=datetime.utcnow())
+    modification_date = db.Column(db.DateTime, default=datetime.utcnow())
+    child_reply_owner = db.Column(db.Integer(), db.ForeignKey("user.id"))
+    replies_reply = db.Column(db.Integer(), db.ForeignKey("replycomment.id"))
+    def __repr__(self):
+        return f"ChildReply {self.id}"
