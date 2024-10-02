@@ -87,7 +87,7 @@ def blog_page():
                     db.session.commit()
                     comment_id = comment_to_post.id
                     flash(f"Thanks for your comment", category="success")
-                    return redirect(url_for("blog_page", comment_id=comment_id))
+                    return redirect(url_for("blog_page", post_id=post_id))
                 if  reply_form.validate_on_submit():
                     comment_id = request.form.get("comment_id")
                     if comment_id:
@@ -97,18 +97,19 @@ def blog_page():
                         db.session.commit()
                         reply_id = reply_to_post.id
                         flash(f"Thanks for your comment", category="success")
-                        return redirect(url_for("blog_page", reply_id=reply_id))
+                        return redirect(url_for("blog_page", post_id=post_id))
                 if  replies_reply_form.validate_on_submit():
-                    comment_id = request.form.get("comment_id")
+                    print("ggghh", replies_reply_form)
                     reply_id = request.form.get("reply_id")
+                    comment_id = request.form.get("comment_id")
                     if reply_id and comment_id:
                         replies_to_reply = ReplyComment(text=replies_reply_form.reply_to_reply.data, responder=current_user.id,
-                                                     reply_comment=comment_id, reply_to_reply=reply_id)
+                                                        reply_comment=comment_id, reply_to_reply=reply_id)
                         db.session.add(replies_to_reply)
                         db.session.commit()
                         reply_reply_id = replies_to_reply.id
                         flash(f"Thanks for your comment", category="success")
-                        return redirect(url_for("blog_page", reply_reply_id=reply_reply_id))
+                        return redirect(url_for("blog_page", post_id=post_id))
             if request.method == "GET":
                 # Display a specific blog with its comments and the replies associated with those comments
                 comment_with_replies = (db.session.query(Comment).filter(Comment.comments_on_post == post_id).options(
