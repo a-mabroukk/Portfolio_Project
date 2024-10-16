@@ -1,5 +1,6 @@
 from pencil import app
-from flask import render_template, redirect, url_for, flash, request, abort
+from flask_cors import CORS
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify
 from werkzeug.utils import secure_filename
 from pencil.models import Post, User, Comment, ReplyComment, ChildReply, Profile, Role
 from pencil.forms import RegisterForm, LoginForm, PostForm, SearchForm, CommentForm, ReplyForm, ProfileForm, ReplyReplyForm
@@ -24,11 +25,17 @@ def home_page():
             search_results = Post.query.filter(Post.id.ilike(f"%{search_form.input_search.data}%")).all()
         # Flash a message if no results found after both searches  
         if not search_results:
-            flash("No results found", category="info")
-            return redirect(url_for("home_page", search_results=[]))  # Redirect with empty results
-    # Fetch the latest posts  
+            return jsonify({"posts": [], "searchResults": [], "message": "No results found"}), 404
+            #flash("No results found", category="info")
+            #return redirect(url_for("home_page", search_results=[]))  # Redirect with empty results
+    # Fetch the latest posts
     posts = Post.query.order_by(Post.title.desc()).limit(20).all()
-    return render_template("home.html", posts=posts, search_form=search_form, search_results=search_results)
+
+    posts_data = [{"id": post.id, "title": post.title} for post in posts]
+    search_results_data = [{"id": post.id, "title": post.title} for post in search_results]
+    
+    return jsonify({"posts": posts_data, "searchResults": search_results_data}), 200
+    #return render_template("home.html", posts=posts, search_form=search_form, search_results=search_results)
 
 
 @app.route("/publish", methods=["POST", "GET"])
@@ -389,15 +396,18 @@ def register_page():
             db.session.add(user_to_create)
             db.session.commit()
             login_user(user_to_create)
-            flash(f"Account created successfully! You are now logged in as {user_to_create.username}", category='success')
-            return redirect(url_for("home_page"))
+            #flash(f"Account created successfully! You are now logged in as {user_to_create.username}", category='success')
+            #return redirect(url_for("home_page"))
+            return jsonify(message=f"Account created for {user_to_create.username}!"), 201
 
         if form.errors != {}:
             for error_message in form.errors.values():
                 flash(f"There is an error with registing: {error_message}", category="danger")
-    return render_template("register.html", form=form)
+                return jsonify(errors=form.errors), 400
+    return jsonify({"id": user_to_create.id, "username": user_to_create.username})
+    #return render_template("register.html", form=form)
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["POST", "GET"])
 def login_page():
     form = LoginForm()
 
@@ -405,11 +415,14 @@ def login_page():
         attempted_user = User.query.filter_by(username=form.username.data).first()
         if attempted_user and attempted_user.check_password_correction(attempted_password=form.password.data):
             login_user(attempted_user)
-            flash(f"Success! You are logged in as: {attempted_user.username}", category="success")
-            return redirect(url_for("home_page"))
+            return jsonify({"message": "Success! You are logged in."}), 200
+            #flash(f"Success! You are logged in as: {attempted_user.username}", category="success")
+            #return redirect(url_for("home_page"))
         else:
-            flash('Username or password are not correct! Please try again', category='danger')
-    return render_template("login.html", form=form)
+            return jsonify({"message": "Username or password are not correct!"}), 401
+            #flash('Username or password are not correct! Please try again', category='danger')
+    #return render_template("login.html", form=form)
+    return jsonify({"id": attempted_user.id, "email": attempted_user.email})
 
 @app.route("/logout")
 def logout_page():

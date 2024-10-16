@@ -4,9 +4,11 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 import os  # Import the os module here
 from werkzeug.utils import secure_filename
+from flask_cors import CORS
 #from flask_security import Security, SQLAlchemyUserDatastore
 
 app = Flask(__name__)
+CORS(app)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///pencil.db"
 app.config['SECRET_KEY'] = '55c4fe454d8ee50f9f81054f'
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')  # Path where images will be stored
