@@ -25,17 +25,11 @@ def home_page():
             search_results = Post.query.filter(Post.id.ilike(f"%{search_form.input_search.data}%")).all()
         # Flash a message if no results found after both searches  
         if not search_results:
-            return jsonify({"posts": [], "searchResults": [], "message": "No results found"}), 404
-            #flash("No results found", category="info")
-            #return redirect(url_for("home_page", search_results=[]))  # Redirect with empty results
-    # Fetch the latest posts
+            flash("No results found", category="info")
+            return redirect(url_for("home_page", search_results=[]))  # Redirect with empty results
+    # Fetch the latest posts  
     posts = Post.query.order_by(Post.title.desc()).limit(20).all()
-
-    posts_data = [{"id": post.id, "title": post.title} for post in posts]
-    search_results_data = [{"id": post.id, "title": post.title} for post in search_results]
-    
-    return jsonify({"posts": posts_data, "searchResults": search_results_data}), 200
-    #return render_template("home.html", posts=posts, search_form=search_form, search_results=search_results)
+    return render_template("home.html", posts=posts, search_form=search_form, search_results=search_results)
 
 
 @app.route("/publish", methods=["POST", "GET"])
@@ -411,18 +405,21 @@ def register_page():
 def login_page():
     form = LoginForm()
 
-    if form.validate_on_submit():
-        attempted_user = User.query.filter_by(username=form.username.data).first()
-        if attempted_user and attempted_user.check_password_correction(attempted_password=form.password.data):
-            login_user(attempted_user)
-            return jsonify({"message": "Success! You are logged in."}), 200
-            #flash(f"Success! You are logged in as: {attempted_user.username}", category="success")
-            #return redirect(url_for("home_page"))
-        else:
-            return jsonify({"message": "Username or password are not correct!"}), 401
-            #flash('Username or password are not correct! Please try again', category='danger')
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    #if form.validate_on_submit():
+    attempted_user = User.query.filter_by(username=form.username.data).first()
+    if attempted_user and attempted_user.check_password_correction(attempted_password=form.password.data):
+        login_user(attempted_user)
+        return jsonify({"message": "Success! You are logged in."}), 200
+        #flash(f"Success! You are logged in as: {attempted_user.username}", category="success")
+        #return redirect(url_for("home_page"))
+    else:
+        return jsonify({"message": "Username or password are not correct!"}), 401
+        #flash('Username or password are not correct! Please try again', category='danger')
     #return render_template("login.html", form=form)
-    return jsonify({"id": attempted_user.id, "email": attempted_user.email})
+    #return jsonify({"id": attempted_user.id, "email": attempted_user.email})
 
 @app.route("/logout")
 def logout_page():

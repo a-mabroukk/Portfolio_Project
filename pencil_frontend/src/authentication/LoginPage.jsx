@@ -14,6 +14,10 @@ const LoginPage = () => {
     axios.post('http://127.0.0.1:5000/login', {
         username: username,
         password: password
+    }, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
     })
     .then(function (response) {
         console.log(response);
@@ -22,7 +26,7 @@ const LoginPage = () => {
     })
     .catch(function (error) {
         console.log(error, 'error');
-        if (error.response.status === 401) {
+        if (error.response && error.response.status === 401) {
             alert("Invalid credentials");
         }
     });
@@ -46,10 +50,9 @@ const LoginPage = () => {
                 <input type="password" className="form-control" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 <br />
                 <div className="form-check mb-0">
-                      <input className="form-check-input me-2" type="checkbox" value="" id="form2Example3" />
-                      <label className="form-check-label" for="form2Example3">
-                        Remember me
-                      </label>
+                    <input className="form-check-input me-2" type="checkbox" value="" id="form2Example3" />
+                    <label className="form-check-label" htmlFor="form2Example3">Remember me</label>
+
                 </div>
                 <div className="text-center text-lg-start mt-4 pt-2">
                     <button type="button" className="btn btn-primary btn-lg" onClick={Login} >Log In</button>
