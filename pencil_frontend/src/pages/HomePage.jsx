@@ -16,7 +16,7 @@ const HomePage = () => {
         try {
             const response = await axios.get("http://127.0.0.1:5000/home");
             console.log("Response data:", response.data);
-            setPosts(response.data.posts || []);
+            setPosts(response.data || []);
         } catch (err) {
             console.error(err);  // Log the error for debugging
             setError("An error occurred while fetching posts.");
@@ -40,8 +40,9 @@ const HomePage = () => {
         headers: { "Content-Type": "application/json" }
       });
 
-      setSearchResults(response.data.searchResults || []);
+      setSearchResults(response.data || []);
     } catch (err) {
+      console.error(err);
       setError("No results found");
     } finally {
       setLoading(false);

@@ -24,13 +24,8 @@ const PostForm = () => {
         setSuccessMessage('');
 
         try {
-            const response = await axios.post('http://127.0.0.1:5000/publish', formData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Add any other headers if needed (like authorization)
-                },
-            });
-            setSuccessMessage(response.data.message);
+            const response = await axios.post('http://127.0.0.1:5000/publish', formData);
+            console.log(response.data.post_id); // Handle success response
             navigate(`/blog/${response.data.post_id}`); // Redirect to the newly created post
         } catch (error) {
             if (error.response) {
@@ -49,27 +44,13 @@ const PostForm = () => {
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
                     <label htmlFor="title">Title</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        id="title"
-                        name="title"
-                        required
-                        value={formData.title}
-                        onChange={handleChange}
-                    />
+                    <input type="text" className="form-control" id="title" name="title" required
+                        value={formData.title} onChange={handleChange}/>
                 </div>
                 <div className="form-group">
                     <label htmlFor="content">Content</label>
-                    <textarea
-                        className="form-control"
-                        id="content"
-                        name="content"
-                        rows="5"
-                        required
-                        value={formData.content}
-                        onChange={handleChange}
-                    ></textarea>
+                    <textarea className="form-control" id="content" name="content" rows="5"
+                        required value={formData.content} onChange={handleChange}></textarea>
                 </div>
                 <button type="submit" className="btn btn-primary">Save</button>
                 <a href="/blog" className="btn btn-secondary">Cancel</a>
