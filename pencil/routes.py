@@ -10,34 +10,50 @@ from pencil import db
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
 import os
+from flask_cors import CORS, cross_origin
+
 
 @app.route("/")
 @app.route("/home", methods=["GET", "POST"])
-@login_required
+# @login_required
+@cross_origin()
 def home_page():
     search_form = SearchForm()
     search_results = []
-
-    if search_form.validate_on_submit(): 
+    if search_form.input_search.data:
         search_results = Post.query.filter(Post.title.ilike(f"%{search_form.input_search.data}%")).all()
-        # If no results found, search by ID  
+        # If no results found, search by ID
         if not search_results:
             search_results = Post.query.filter(Post.id.ilike(f"%{search_form.input_search.data}%")).all()
-        # Flash a message if no results found after both searches  
+        # Flash a message if no results found after both searches
         if not search_results:
             flash("No results found", category="info")
-            return redirect(url_for("home_page", search_results=[]))  # Redirect with empty results
-    # Fetch the latest posts  
-    posts = Post.query.order_by(Post.title.desc()).limit(20).all()
-    return render_template("home.html", posts=posts, search_form=search_form, search_results=search_results)
+            return jsonify("No results found"), 200
+            # return redireact(url_for("home_page", search_results=[]))  # Redirect with empty results
+            
+        search_result = [res.to_dict() for res in search_results]
 
+        #search_result = []
+        #for res in search_results:
+            #search_result.append(res.to_dict())
+
+
+        return jsonify(search_result)
+    posts = Post.query.order_by(Post.title.desc()).limit(20).all()
+    #for post in posts:
+        #posts_dict,append(post.to_dict())
+    posts_dict = [post.to_dict() for post in posts]
+    return jsonify(posts_dict)
+    # return render_template("home.html", posts=posts, search_form=search_form, search_results=search_results)
 
 @app.route("/publish", methods=["POST", "GET"])
-@login_required
+#@login_required
+@cross_origin()
 def posting_page():
     post_form = PostForm()
     # Publishing a post
-    if post_form.validate_on_submit(): # Ensure the form is valid
+    #if post_form.validate_on_submit(): # Ensure the form is valid
+    if post_form.title.data:
         try:
             print("Form data:", post_form.title.data, post_form.content.data)
             post_to_create = Post(title=post_form.title.data,
@@ -47,18 +63,22 @@ def posting_page():
             db.session.commit()
             post_id = post_to_create.id
             print("blog:", post_to_create.id)
-            flash(f"The blog has been saved successfully", category="success")
-            return redirect(url_for("blog_page", post_id=post_id))
+            return jsonify(message=f"The blog has been saved successfully", category="success", post_id=post_id), 201
+            #flash(f"The blog has been saved successfully", category="success")
+            #return redirect(url_for("blog_page", post_id=post_id))
         except Exception as e:
             db.session.rollback()  # Rollback in case of error
             flash("An error occurred while saving the post. Please try again.", category="danger")
     if post_form.errors != {}:
         for error_message in post_form.errors.values():
-            flash(f"There is an error with adding: {error_message}", category="danger")
-    return render_template("add_post.html", post_form=post_form)
+            return jsonify(errors=post_form.errors, category="danger"), 400
+            #flash(f"There is an error with adding: {error_message}", category="danger")
+    return jsonify({"id": post_to_create.id, "title": post_to_create.title, "conent": post_to_create.content})
+    #return render_template("add_post.html", post_form=post_form)
 
 @app.route("/blog", methods=["POST", "GET"])
-@login_required
+#@login_required
+@cross_origin()
 def blog_page():
     comment_form = CommentForm()
     reply_form = ReplyForm()
@@ -73,23 +93,27 @@ def blog_page():
                 if 'save' in request.form:
                     print("Save button clicked")
                     if requested_blog in current_user.archives:
-                        flash("Blog is already saved.", category="info")
+                        return jsonify({"message": "Blog is already saved", "category": "info"}), 200
+                        #flash("Blog is already saved.", category="info")
                     else:
                         current_user.archives.append(requested_blog)
                         db.session.commit()
-                        flash(f"The blog is has been saved successfully", category="success")
-                        return redirect(url_for("save_page"))
+                        return jsonify({"message": "Blog saved successfully"}, category="success"), 200
+                        #flash(f"The blog is has been saved successfully", category="success")
+                        #return redirect(url_for("save_page"))
 
-                if comment_form.validate_on_submit():
+                if comment_form.comment.data:
                     comment_to_post = Comment(text=comment_form.comment.data,
                                               comment_owner=current_user.id,
                                               comments_on_post=requested_blog.id)
                     db.session.add(comment_to_post)
                     db.session.commit()
                     comment_id = comment_to_post.id
-                    flash(f"Thanks for your comment", category="success")
-                    return redirect(url_for("blog_page", post_id=post_id))
-                if  reply_form.validate_on_submit():
+                    return jsonify({"message": "Comment added successfully"}, category="success", post_id=post_id), 201
+                    #flash(f"Thanks for your comment", category="success")
+                    #return redirect(url_for("blog_page", post_id=post_id))
+                #if reply_form.validate_on_submit():
+                if reply_form.reply.data:
                     comment_id = request.form.get("comment_id")
                     if comment_id:
                         reply_to_post = ReplyComment(text=reply_form.reply.data, responder=current_user.id,
@@ -97,9 +121,10 @@ def blog_page():
                         db.session.add(reply_to_post)
                         db.session.commit()
                         reply_id = reply_to_post.id
-                        flash(f"Thanks for your comment", category="success")
-                        return redirect(url_for("blog_page", post_id=post_id))
-                if  replies_reply_form.validate_on_submit():
+                        return jsonify({"message": "Comment added successfully"}, category="success", post_id=post_id), 201
+                        #flash(f"Thanks for your comment", category="success")
+                        #return redirect(url_for("blog_page", post_id=post_id))
+                if  replies_reply_form.reply_reply.data:
                     print("ggghh", replies_reply_form)
                     reply_id = request.form.get("reply_id")
                     if reply_id:
@@ -108,21 +133,44 @@ def blog_page():
                         db.session.add(replies_to_reply)
                         db.session.commit()
                         reply_reply_id = replies_to_reply.id
-                        flash(f"Thanks for your comment", category="success")
-                        return redirect(url_for("blog_page", post_id=post_id))
+                        return jsonify({"message": "Comment added successfully"}, category="success", post_id=post_id), 201
+                        #flash(f"Thanks for your comment", category="success")
+                        #return redirect(url_for("blog_page", post_id=post_id))
             if request.method == "GET":
                 # Display a specific blog with its comments and the replies associated with those comments
                 comment_with_replies = (db.session.query(Comment).filter(Comment.comments_on_post == post_id).options(
                                         joinedload(Comment.reply_comments).joinedload(ReplyComment.replies_on_reply))
                                         .order_by(Comment.publication_date.desc()).all())
+                comments_response = []
+                for comment in comment_with_replies:
+                    comment_data = {"id": comment.id, "text": comment.text, "comment_owner": comment.comment_owner, "publication_date": comment.publication_date,
+                                    "replies": []}  # This will hold the replies to this comment
 
-                return render_template("blog.html", post_id=requested_blog, comment_form=comment_form,
-                                        posted_comments=comment_with_replies, reply_form=reply_form, replies_reply_form=replies_reply_form)
+                    # Add replies to the comment
+                    for reply in comment.reply_comments:
+                        reply_data = { "id": reply.id, "text": reply.text, "responder": reply.responder, "publication_date": reply.publication_date,
+                                      "replies": []}  # This will hold replies to this reply (if needed)
+        
+                    # If you have a structure for replies on replies, you can populate them here
+                        for child_reply in reply.replies_on_reply:
+                            child_reply_data = {"id": child_reply.id, "text": child_reply.text, "child_reply_owner": child_reply.child_reply_owner,
+                                                "publication_date": child_reply.publication_date}
+                            reply_data["replies"].append(child_reply_data)
+
+                        comment_data["replies"].append(reply_data)
+
+                    comments_response.append(comment_data)
+                return jsonify({"post": {"id": requested_blog.id, "title": requested_blog.title, "content": requested_blog.content,
+                                        "publication_date": requested_blog.publication_date}, "comments": comments_response}), 200
+                #return render_template("blog.html", post_id=requested_blog, comment_form=comment_form,
+                                        #posted_comments=comment_with_replies, reply_form=reply_form, replies_reply_form=replies_reply_form)
             else:
-                flash(f"Blog not found", category="danger")
-                return redirect(url_for("home_page"))
+                return jsonify({"message": "Blog not found"}, category="danger"), 401
+                #flash(f"Blog not found", category="danger")
+                #return redirect(url_for("home_page"))
     for error_message in reply_form.errors.values():
         flash(f"There was an error : {error_message}", category="danger")
+        return jsonify(errors=reply_form.errors), 400
     return redirect(url_for("home_page"))
 
 @app.route("/saved", methods=["GET", "POST"])
@@ -223,7 +271,7 @@ def modify_post():
     return render_template("modify.html", form=form, post=post)
 
 @app.route("/delete", methods=["POST", "GET"])
-@login_required  
+@login_required
 def delete_page():
     # Canceling blog
     post_id = request.args.get("post_id")
@@ -241,7 +289,7 @@ def delete_page():
     return redirect(url_for("home_page"))
 
 @app.route("/delete-comment", methods=["POST", "GET"])
-@login_required  
+@login_required
 def delete_comment():
     comment_id = request.args.get("comment_id")
     if comment_id:
@@ -256,7 +304,7 @@ def delete_comment():
     return redirect(url_for("blog_page", post_id=comment_to_delete.comments_on_post))
 
 @app.route("/delete-reply-comment", methods=["POST", "GET"])
-@login_required  
+@login_required
 def delete_reply():
     reply_id = request.args.get("reply_id")
     if reply_id:
@@ -339,7 +387,7 @@ def edit_profile():
                         filename = secure_filename(file.filename)
                         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))  # Save the file
                         original_filename, extension = os.path.splitext(file.filename)
-                        profile_to_update.profile_picture = f"{original_filename}{extension}"  
+                        profile_to_update.profile_picture = f"{original_filename}{extension}"
 
                 db.session.add(profile_to_update)
                 db.session.commit()
@@ -352,7 +400,7 @@ def edit_profile():
     return render_template("modify_profile.html", form=profile_form, profile_to_update=profile_to_update)
 
 # @app.route("/delete/<id>", methods=["POST"])
-# @login_required  
+# @login_required
 # def delete_page(id):
     # Canceling blog
     # post = Post.query.filter_by(id=id).first()
@@ -373,7 +421,8 @@ def register_page():
 
 
     if request.method == "POST":
-        if form.validate_on_submit():
+        if form.email_address.data:
+            print("Form data:", form.username.data, form.email_address.data, form.password1.data)
             #user_to_create = User.query.filter_by(email=request.form.email_address).first()
             # if user already exists render the message
             #if user_to_create:
@@ -404,10 +453,10 @@ def register_page():
 @app.route("/login", methods=["POST", "GET"])
 def login_page():
     form = LoginForm()
-
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+    print("Form data:", form.username.data, form.password.data)
+    # data = request.get_json()
+    # username = data.get('username')
+    # password = data.get('password')
     #if form.validate_on_submit():
     attempted_user = User.query.filter_by(username=form.username.data).first()
     if attempted_user and attempted_user.check_password_correction(attempted_password=form.password.data):
@@ -416,7 +465,7 @@ def login_page():
         #flash(f"Success! You are logged in as: {attempted_user.username}", category="success")
         #return redirect(url_for("home_page"))
     else:
-        return jsonify({"message": "Username or password are not correct!"}), 401
+        return jsonify({"message": "Username or password are not correct! Please try again"}), 401
         #flash('Username or password are not correct! Please try again', category='danger')
     #return render_template("login.html", form=form)
     #return jsonify({"id": attempted_user.id, "email": attempted_user.email})
