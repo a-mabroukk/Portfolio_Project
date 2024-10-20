@@ -5,6 +5,7 @@ import Login from "./authentication/LoginPage";
 import Register from "./authentication/Register";
 import PostForm from "./pages/Add_blog";
 import BlogPost from "./pages/Blog";
+import ModifyPost from "./pages/Modify_blog";
 
 
 
@@ -18,6 +19,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/publish" element={<PostForm />} />
       <Route path="/blog/:postId" element={<BlogPost />} />
+      <Route path="/modify/:postId" element={<ModifyPost />} />
         {/* Define other routes here */}
       </Routes>
     </Router>

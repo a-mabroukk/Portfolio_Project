@@ -1,23 +1,26 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom"; 
+import { useNavigate, useParams } from "react-router-dom";; 
 
 const BlogPage = () => {
-  const { postId } = useParams(); 
+  const { postId } = useParams();
+  const navigate = useNavigate(); // Initialize the useNavigate hook
   const [blog, setBlog] = useState(null); 
   const [comments, setComments] = useState([]); 
   const [commentText, setCommentText] = useState(""); 
   const [replyText, setReplyText] = useState({}); 
   const [childReplyText, setChildReplyText] = useState({}); 
-  const [saveMessage, setSaveMessage] = useState(null); 
+  const [saveMessage, setSaveMessage] = useState(null);
 
-  // Fetch blog and comments on mount
+ // Fetch blog and comments on mount
   useEffect(() => {
     const fetchBlogAndComments = async () => {
       try {
         const blogResponse = await axios.get(`http://127.0.0.1:5000/blog?post_id=${postId}`);
         setBlog(blogResponse.data.post);
-        fetchComments(); 
+
+        setComments(blogResponse.data.comments);
+        // fetchComments();
       } catch (error) {
         console.error("Error fetching blog and comments:", error);
       }
@@ -28,30 +31,23 @@ const BlogPage = () => {
 
   // Fetch comments with replies
   const fetchComments = () => {
-    axios.get(`http://127.0.0.1:5000/comments?post_id=${postId}`)
+    axios.get(`http://127.0.0.1:5000/blog?post_id=${postId}`)
       .then(response => {
-        console.log("Fetched comments:", response.data.comment); 
-        setComments(response.data.comment); // Ensure this matches backend structure
+        console.log("Fetched comments:", response);
+        setComments(response.data); // Ensure this matches backend structure
       })
       .catch(error => {
         console.error("Error fetching comments:", error);
       });
   };
 
-  // Save blog
-  const handleSaveBlog = () => {
-    axios.post(`http://127.0.0.1:5000/blog/save?post_id=${postId}`)
-      .then(response => setSaveMessage(response.data.message))
-      .catch(error => console.error("Error saving blog:", error));
-  };
-
   // Add comment
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log("Submitting comment:", commentText); 
-      const response = await axios.post(`http://127.0.0.1:5000/blog?post_id=${postId}`, 
-        { comment: commentText }, 
+      console.log("Submitting comment:", commentText);
+      const response = await axios.post(`http://127.0.0.1:5000/blog?post_id=${postId}`,
+        { comment: commentText },
         { headers: { 'Content-Type': 'application/json' } }
       );
       setCommentText("");  // Reset comment text
@@ -62,15 +58,29 @@ const BlogPage = () => {
   };
 
   // Add reply to a comment
-  const handleReplySubmit = (e, commentId) => {
+  const handleReplySubmit = async (e, commentId) => {
     e.preventDefault();
-    axios.post(`http://127.0.0.1:5000/blog/reply`, { reply: replyText[commentId], comment_id: commentId })
-      .then(() => {
-        setReplyText({ ...replyText, [commentId]: "" });
-        fetchComments();
-      })
-      .catch(error => console.error("Error adding reply:", error));
+  
+    try {
+      console.log("Submitting reply:", replyText[commentId]);
+      const response = await axios.post(`http://127.0.0.1:5000/blog/reply`, { 
+        reply: replyText[commentId], 
+        comment_id: commentId
+      });
+      
+      // Clear the reply text for the specific comment after successful submission
+      setReplyText({ ...replyText, [commentId]: "" });
+      
+      // Log the fetched response for debugging
+      console.log("Fetched comments:", response.data.reply);
+  
+      // Fetch updated comments after adding a reply
+      fetchComments();
+    } catch (error) {
+      console.error("Error adding reply:", error);
+    }
   };
+  
 
   // Add reply to a reply (child reply)
   const handleChildReplySubmit = (e, replyId) => {
@@ -83,6 +93,17 @@ const BlogPage = () => {
       .catch(error => console.error("Error adding child reply:", error));
   };
 
+  // Save blog
+  const handleSaveBlog = () => {
+    axios.post(`http://127.0.0.1:5000/blog/save?post_id=${postId}`)
+      .then(response => setSaveMessage(response.data.message))
+      .catch(error => console.error("Error saving blog:", error));
+  };
+
+  const handleEditBlog = () => {
+    navigate(`/modify/${postId}`); // Navigate to the edit page for the specific blog post
+  };
+
   if (!blog) return <div>Loading...</div>;
 
   return (
@@ -93,6 +114,7 @@ const BlogPage = () => {
         <p>{blog.content}</p>
         <button onClick={handleSaveBlog} className="btn btn-success">Save Blog</button>
         {saveMessage && <p>{saveMessage}</p>}
+        <button onClick={handleEditBlog} className="btn btn-primary">Edit Blog</button> {/* Edit button */}
       </div>
 
       {/* Comments Section */}

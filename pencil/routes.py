@@ -41,7 +41,7 @@ def home_page():
         return jsonify(search_result)
     posts = Post.query.order_by(Post.title.desc()).limit(20).all()
     #for post in posts:
-        #posts_dict,append(post.to_dict())
+        #posts_dict.append(post.to_dict())
     posts_dict = [post.to_dict() for post in posts]
     return jsonify(posts_dict)
     # return render_template("home.html", posts=posts, search_form=search_form, search_results=search_results)
@@ -145,6 +145,7 @@ def blog_page():
                 for comment in comment_with_replies:
                     comment_data = {"id": comment.id, "text": comment.text, "comment_owner": comment.comment_owner, "publication_date": comment.publication_date,
                                     "replies": []}  # This will hold the replies to this comment
+                    
 
                     # Add replies to the comment
                     for reply in comment.reply_comments:
@@ -240,7 +241,8 @@ def update_reply():
     return render_template("edit_reply_to_comment.html", form=form, replies=replies)
 
 @app.route("/modify", methods=["POST", "GET"])
-@login_required
+#@login_required
+@cross_origin()
 def modify_post():
     post_id = request.args.get("post_id")
     if post_id:
