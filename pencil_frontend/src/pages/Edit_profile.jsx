@@ -4,23 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 const EditProfile = () => {
     const { profileId } = useParams();
-    const [profile, setProfile] = useState({
-        name: '',
-        username: '',
-        bio: '',
-        gmail: '',
-        facebook: '',
-        instagram: '',
-        x: '',
-        linkedin: '',
-        github: '',
-        picture: null,
-    });
-
+    const [profile_to_update, setProfile] = useState({name: '', username: '', bio: '', gmail: '',
+        facebook: '', instagram: '', x: '', linkedin: '', github: '', picture: null});
     const [errors, setErrors] = useState({});
     const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(false);
-
     const [flashMessage, setFlashMessage] = useState(null);
     const navigate = useNavigate();
 
@@ -43,7 +31,7 @@ const EditProfile = () => {
             } catch (error) {
                 if (error.response && error.response.status === 401) {
                     console.error("Error fetching profile:", error);
-                    //navigate("/login");
+                    navigate("/login");
                 } else {
                     setFlashMessage({
                       type: "danger",
@@ -70,16 +58,11 @@ const EditProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const formData = new FormData();
-        
-        for (const key in profile) {
-            formData.append(key, profile[key]);
-        }
     
         try {
             setLoading(true);
             // Ensure profileId is defined and properly formatted
-            await axios.post(`http://127.0.0.1:5000/update-profile/${profileId}`, formData, {
+            await axios.post(`http://127.0.0.1:5000/update-profile/${profileId}`, profile_to_update, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                     Authorization: `Bearer ${token}`,
@@ -108,51 +91,51 @@ const EditProfile = () => {
             <form onSubmit={handleSubmit} encType="multipart/form-data">
                 <div>
                     <label>Name</label>
-                    <input type="text" name="name" value={profile.name} onChange={handleChange} />
+                    <input type="text" name="name" value={profile_to_update.name} onChange={handleChange} />
                     {errors.name && <div className="error">{errors.name}</div>}
                 </div>
                 <div>
                     <label>Username</label>
-                    <input type="text" name="username" value={profile.username} onChange={handleChange} />
+                    <input type="text" name="username" value={profile_to_update.username} onChange={handleChange} />
                     {errors.username && <div className="error">{errors.username}</div>}
                 </div>
                 <div>
                     <label>Bio</label>
-                    <textarea name="bio" value={profile.bio} onChange={handleChange}></textarea>
+                    <textarea name="bio" value={profile_to_update.bio} onChange={handleChange}></textarea>
                     {errors.bio && <div className="error">{errors.bio}</div>}
                 </div>
                 <div>
                     <label>Gmail</label>
-                    <input type="text" name="gmail" value={profile.gmail} onChange={handleChange} />
+                    <input type="text" name="gmail" value={profile_to_update.gmail} onChange={handleChange} />
                     {errors.gmail && <div className="error">{errors.gmail}</div>}
                 </div>
                 <div>
                     <label>Facebook</label>
-                    <input type="text" name="facebook" value={profile.facebook} onChange={handleChange} />
+                    <input type="text" name="facebook" value={profile_to_update.facebook} onChange={handleChange} />
                     {errors.facebook && <div className="error">{errors.facebook}</div>}
                 </div>
                 <div>
                     <label>Instagram</label>
-                    <input type="text" name="instagram" value={profile.instagram} onChange={handleChange} />
+                    <input type="text" name="instagram" value={profile_to_update.instagram} onChange={handleChange} />
                     {errors.instagram && <div className="error">{errors.instagram}</div>}
                 </div>
                 <div>
                     <label>X (formerly Twitter)</label>
-                    <input type="text" name="x" value={profile.x} onChange={handleChange} />
+                    <input type="text" name="x" value={profile_to_update.x} onChange={handleChange} />
                     {errors.x && <div className="error">{errors.x}</div>}
                 </div>
                 <div>
                     <label>LinkedIn</label>
-                    <input type="text" name="linkedin" value={profile.linkedin} onChange={handleChange} />
+                    <input type="text" name="linkedin" value={profile_to_update.linkedin} onChange={handleChange} />
                     {errors.linkedin && <div className="error">{errors.linkedin}</div>}
                 </div>
                 <div>
                     <label>GitHub</label>
-                    <input type="text" name="github" value={profile.github} onChange={handleChange} />
+                    <input type="text" name="github" value={profile_to_update.github} onChange={handleChange} />
                     {errors.github && <div className="error">{errors.github}</div>}
                 </div>
                 <div>
-                    <label>Profile Picture</label>
+                    <label>profile_to_update Picture</label>
                     <input type="file" name="picture" onChange={handleChange} />
                     {errors.picture && <div className="error">{errors.picture}</div>}
                 </div>

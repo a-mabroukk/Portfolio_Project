@@ -7,7 +7,7 @@ import Logout from "./authentication/Logout";
 import PostForm from "./pages/Add_blog";
 import BlogPost from "./pages/Blog";
 import ModifyPost from "./pages/Modify_blog";
-import EditProfile from "./pages/Profile_handle";
+import EditProfile from "./pages/Edit_profile";
 import UserProfile from "./pages/Profile";
 
 
@@ -26,8 +26,8 @@ function App() {
       <Route path="/publish" element={<PostForm token={token} />} />
       <Route path="/blog/:postId" element={<BlogPost token={token} />} />
       <Route path="/modify/:postId" element={<ModifyPost token={token} />} />
-      <Route path="/update-profile" element={<EditProfile token={token} />} />
-      <Route path="/profile" element={<UserProfile token={token} />} />
+      <Route path="/update-profile/:profileId" element={<EditProfile token={token} />} />
+      <Route path="/profile/:profileId" element={<UserProfile token={token} />} />
         {/* Define other routes here */}
       </Routes>
     </Router>

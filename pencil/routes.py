@@ -393,36 +393,6 @@ def edit_profile():
                     return jsonify({"message": "The profile has been updated successfully.", "profile_to_update": profile_to_update.id, "category": "success"}), 200
                     #flash("Your profile was updated successfully", category="success")
                     #return redirect(url_for("profile"))
-    else:
-        if request.method == "POST":
-            if profile_form.name.data:
-                # Create a new profile if one does not exist
-                if current_user.id != profile_to_update.users_profile:
-                    return jsonify({"message": "You do not have permission to modify this blog.", "category": "danger"}), 401
-                profile_to_update = Profile(username=profile_form.username.data,
-                                            name=profile_form.name.data,
-                                            bio=profile_form.bio.data,
-                                            gmail_links=profile_form.gmail.data,
-                                            facebook_links=profile_form.facebook.data,
-                                            instagram_links=profile_form.instagram.data,
-                                            x_links=profile_form.x.data,
-                                            linkedin_links=profile_form.linkedin.data,
-                                            github_links=profile_form.github.data,
-                                            users_profile=current_user.id)
-                if 'picture' in request.files:
-                    file = request.files['picture']
-                    if file.filename != '':
-                        filename = secure_filename(file.filename)
-                        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))  # Save the file
-                        original_filename, extension = os.path.splitext(file.filename)
-                        profile_to_update.profile_picture = f"{original_filename}{extension}"
-
-                db.session.add(profile_to_update)
-                db.session.commit()
-                return jsonify({"message": "The profile has been updated successfully.", "profile_to_update": profile_to_update.id, "category": "success"}), 200
-                #flash("Your profile was updated successfully", category="success")
-                #return redirect(url_for("profile"))
-
         # Handle validation errors
         for error_message in profile_form.errors.values():
             flash(f"There was an error updating your profile: {error_message}", category="danger")
@@ -451,7 +421,7 @@ def edit_profile():
 @app.route("/register", methods=["GET", "POST"])
 def register_page():
     form = RegisterForm()
-
+    profile_form = ProfileForm()
 
     if request.method == "POST":
         if form.email_address.data:
@@ -465,17 +435,14 @@ def register_page():
             user_to_create = User(username=form.username.data,
                                   email=form.email_address.data,
                                   password=form.password1.data)
-
-            #member_role = Role.query.filter_by(name='Member').first()
-            #if member_role:  # Ensure the role exists
-                #user_to_create.roles.append(member_role)
             db.session.add(user_to_create)
+            # Create a new profile if one does not exist
+            profile_to_update = Profile(users_profile=user_to_create)
             db.session.commit()
             login_user(user_to_create)
             #flash(f"Account created successfully! You are now logged in as {user_to_create.username}", category='success')
             #return redirect(url_for("home_page"))
             return jsonify(message=f"Account created for {user_to_create.username}!"), 201
-
         if form.errors != {}:
             for error_message in form.errors.values():
                 flash(f"There is an error with registing: {error_message}", category="danger")
