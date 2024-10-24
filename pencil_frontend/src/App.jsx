@@ -26,7 +26,7 @@ function App() {
       <Route path="/publish" element={<PostForm token={token} />} />
       <Route path="/blog/:postId" element={<BlogPost token={token} />} />
       <Route path="/modify/:postId" element={<ModifyPost token={token} />} />
-      <Route path="/update-profile/:profileId" element={<EditProfile token={token} />} />
+      <Route path="/update-profile" element={<EditProfile token={token} />} />
       <Route path="/profile/:profileId" element={<UserProfile token={token} />} />
         {/* Define other routes here */}
       </Routes>

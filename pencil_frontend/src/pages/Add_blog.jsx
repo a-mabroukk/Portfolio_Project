@@ -32,6 +32,7 @@ const PostForm = () => {
     setErrorMessage("");
     setSuccessMessage("");
     console.log("Form Data being sent:", formData);
+    console.log("Authorization Token:", token); // Log token
 
 
     try {
